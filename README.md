@@ -1,8 +1,10 @@
 # ngtsio
-Wrapper for astropy and cfitsio readers for NGTS data files 
+Wrapper for astropy and cfitsio readers for NGTS data files.
 
+## Docs
 
-
+    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST10', fitsreader='pyfits'):
+Return a dictionary with all requested data for an NGTS field.
 
 
 ## Execution time comparison, pyfits vs cfitsio:
