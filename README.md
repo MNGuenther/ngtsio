@@ -19,7 +19,7 @@ which parameters shall be read out from the fits files, e.g.
 See below for other valid request.
 
 #####obj_id / obj_row (int / string / textfile)
-identifier of the objects one wants to read out, e.g. 
+identifier of the objects one wants to read out (only either obj_id or obj_row can be chosen as input, not both), e.g. 
 
     obj_id = 46 or obj_id='046' or obj_id='00046' or obj_id=[46,57,1337] or obj_id='object_ids.txt'
     obj_row = 1 or obj_row=[1,2,3,1337] or obj_row=range(1,100) or obj_row='object_rows.txt'
