@@ -9,10 +9,12 @@ Return a dictionary with all requested data for an NGTS field.
 
 ### Parameters
 fieldname (string):
-    name of the NGTS-field, e.g. 'NG0304-1115'
+
+name of the NGTS-field, e.g. 'NG0304-1115'
     
 keys (string or array of strings):
-    which parameters shall be read out from the fits files, e.g. 'HJD', 'FLUX', and 'FLUX_SYSREM3'. See below for other valid request.
+
+which parameters shall be read out from the fits files, e.g. 'HJD', 'FLUX', and 'FLUX_SYSREM3'. See below for other valid request.
     
     
 
