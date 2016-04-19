@@ -77,11 +77,11 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
     import matplotlib.pyplot as plt
     import ngtsio
 
-#### a) Get and plot the lightcurve for one object
+#### a) Get and plot the detrended lightcurve for one object
 
-    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','FLUX'], obj_id='00046' )
+    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
     plt.figure()
-    plt.plot( dic['HJD'], dic['FLUX'], 'k.' )
+    plt.plot( dic['HJD'], dic['SYSREM_FLUX3'], 'k.' )
     plt.title( dic['OBJ_ID'] )
 
 #### b) Get and plot the mean locations of the first 100 listed objects on the CCD
