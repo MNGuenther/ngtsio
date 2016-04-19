@@ -2,13 +2,14 @@
 Wrapper for astropy and cfitsio readers for NGTS data files.
 This readme contains:
 
-1) Parameters
+1) Examples 
 
-2) Examples 
+2) Parameter descriptions
 
-3) Execution time comparison
+3) List of all valid keys (continued from 2)
 
-4) List of all valid keys
+4) Execution time comparison
+
 
 ## Docs
 
@@ -16,7 +17,44 @@ This readme contains:
 
 Return a dictionary with all requested data for an NGTS field.
 
-### 1) Parameters
+
+
+### 1) Examples
+
+    import matplotlib.pyplot as plt
+    import ngtsio
+
+#### a) Get and plot the detrended lightcurve for one object
+
+    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
+    plt.figure()
+    plt.plot( dic['HJD'], dic['SYSREM_FLUX3'], 'k.' )
+    plt.title( dic['OBJ_ID'] )
+
+#### b) Get and plot the mean locations of the first 100 listed objects on the CCD
+
+    dic = ngtsio.get( 'NG0304-1115', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
+    plt.figure()
+    plt.plot( dic['CCD_X'], dic['CCD_Y'], 'k.' )
+
+#### c) Get the BLS results of some candidates (note that obj_id 1337 does not exist)
+
+    dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[46,49,54,1337] )
+    print dic
+
+#### d) Get and print a bunch of keys with various non-standard settings
+
+    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
+    for key in dic:
+        print '------------'
+        print key, dic[key].shape
+        print dic[key]
+        print '------------'
+
+
+
+
+### 2) Parameters descriptions
 
 #####fieldname (string):
 name of the NGTS-field, e.g. 
@@ -69,71 +107,10 @@ Leave blank if you want to run it on NGTSHEAD/NGTS01/etc. This allows to manuall
 #####ngtsversion (string)
 From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant if filenames are given manually.)
 
-
-
-
-### 2) Examples
-
-    import matplotlib.pyplot as plt
-    import ngtsio
-
-#### a) Get and plot the detrended lightcurve for one object
-
-    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
-    plt.figure()
-    plt.plot( dic['HJD'], dic['SYSREM_FLUX3'], 'k.' )
-    plt.title( dic['OBJ_ID'] )
-
-#### b) Get and plot the mean locations of the first 100 listed objects on the CCD
-
-    dic = ngtsio.get( 'NG0304-1115', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
-    plt.figure()
-    plt.plot( dic['CCD_X'], dic['CCD_Y'], 'k.' )
-
-#### c) Get the BLS results of some candidates (note that obj_id 1337 does not exist)
-
-    dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[46,49,54,1337] )
-    print dic
-
-#### d) Get and print a bunch of keys with various non-standard settings
-
-    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
-    for key in dic:
-        print '------------'
-        print key, dic[key].shape
-        print dic[key]
-        print '------------'
-
-
-
-
-### 3) Execution time comparison, pyfits vs cfitsio:
-
-#####all objects, all times
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader='fitsio' )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader=‘pyfits’ )
-    
-    fitsio average time per run (out of 10 runs): 2.36079950333
-    pyfits average time per run (out of 10 runs): 3.70509300232
-
-#####1 object, all times
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='fitsio’ )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='pyfits' )
-    
-    fitsio average time per run (out of 10 runs): 0.0335123062134
-    pyfits average time per run (out of 10 runs): 0.368131780624
-
-#####100 object, all times 
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='fitsio’ )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='pyfits' )
-    
-    fitsio average time per run (out of 10 runs): 0.123349809647
-    pyfits average time per run (out of 10 runs): 0.462261390686
     
 
 
-
-### 4) List of all valid keys
+### 3) List of all valid keys
 ####a) Nightly Summary Fits file
 #####From 'CATALOGUE' (per object):
 
@@ -175,3 +152,28 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
 
     ['OBJ_ID', 'RANK', 'FLAGS', 'PERIOD', 'WIDTH', 'DEPTH', 'EPOCH', 'DELTA_CHISQ', 'CHISQ', 'NPTS_TRANSIT', 'NUM_TRANSITS', 'NBOUND_IN_TRANS', 'AMP_ELLIPSE', 'SN_ELLIPSE', 'GAP_RATIO', 'SN_ANTI', 'SN_RED', 'SDE', 'MCMC_PERIOD', 'MCMC_EPOCH', 'MCMC_WIDTH', 'MCMC_DEPTH', 'MCMC_IMPACT', 'MCMC_RSTAR', 'MCMC_MSTAR', 'MCMC_RPLANET', 'MCMC_PRP', 'MCMC_PRS', 'MCMC_PRB', 'MCMC_CHISQ_CONS', 'MCMC_CHISQ_UNC', 'MCMC_DCHISQ_MR', 'MCMC_PERIOD_ERR', 'MCMC_EPOCH_ERR', 'MCMC_WIDTH_ERR', 'MCMC_DEPTH_ERR', 'MCMC_RPLANET_ERR', 'MCMC_RSTAR_ERR', 'MCMC_MSTAR_ERR', 'MCMC_CHSMIN', 'CLUMP_INDX', 'CAT_IDX', 'PG_IDX', 'LC_IDX']
 
+
+
+
+### 4) Execution time comparison, pyfits vs cfitsio:
+
+#####all objects, all times
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader='fitsio' )
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader=‘pyfits’ )
+    
+    fitsio average time per run (out of 10 runs): 2.36079950333
+    pyfits average time per run (out of 10 runs): 3.70509300232
+
+#####1 object, all times
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='fitsio’ )
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='pyfits' )
+    
+    fitsio average time per run (out of 10 runs): 0.0335123062134
+    pyfits average time per run (out of 10 runs): 0.368131780624
+
+#####100 object, all times 
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='fitsio’ )
+    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='pyfits' )
+    
+    fitsio average time per run (out of 10 runs): 0.123349809647
+    pyfits average time per run (out of 10 runs): 0.462261390686
