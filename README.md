@@ -95,6 +95,15 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
     dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[46,49,54,1337] )
     print dic
 
+#### d) Get and print a bunch of keys with various non-standard settings
+
+    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
+    for key in dic:
+        print '------------'
+        print key, dic[key].shape
+        print dic[key]
+        print '------------'
+
 
 
 
