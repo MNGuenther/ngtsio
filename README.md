@@ -1,5 +1,5 @@
 # ngtsio
-Wrapper for astropy and cfitsio readers for NGTS data files.
+Wrapper for astropy and cfitsio readers for NGTS data files. The newest stable release can be found under 'releases'.
 This readme contains:
 
 1) Examples 
