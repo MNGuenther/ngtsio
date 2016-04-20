@@ -38,9 +38,9 @@ print dic
 
 #### d) Get and print a bunch of keys for various non-standard settings
 
-dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
-    for key in dic:
-        print '------------'
-        print key, dic[key].shape
-        print dic[key]
-        print '------------'
+dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
+for key in dic:
+    print '------------'
+    print key, dic[key].shape
+    print dic[key]
+    print '------------'
