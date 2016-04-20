@@ -2,25 +2,21 @@
 Wrapper for astropy and cfitsio readers for NGTS data files. The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases.
 This readme contains:
 
-0) Installation
+1. Installation
+2. Examples 
+3. Parameter descriptions
+4. List of all valid keys (continued from 2)
+5. Execution time comparison
 
-1) Examples 
-
-2) Parameter descriptions
-
-3) List of all valid keys (continued from 2)
-
-4) Execution time comparison
-
-
+---
 ## Docs
 
     ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST10', fitsreader='pyfits'):
 
 Return a dictionary with all requested data for an NGTS field.
 
-
-### 0) Installation
+---
+### 1. Installation
 
 ##### a) On ngtshead
 To always use the latest version on ngtshead, simply indclude the following lines at the top of your code:
@@ -32,8 +28,8 @@ To always use the latest version on ngtshead, simply indclude the following line
 The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases. Simply download and copy ngtsio.py into your pythonpath directory.
 
 
-
-### 1) Examples
+---
+### 2. Examples
 
     import matplotlib.pyplot as plt
     import ngtsio
@@ -67,8 +63,8 @@ The newest stable release can be found here:  https://github.com/MNGuenther/ngts
 
 
 
-
-### 2) Parameters descriptions
+---
+### 3. Parameters descriptions
 
 #####fieldname (string):
 name of the NGTS-field, e.g. 
@@ -123,8 +119,8 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
 
     
 
-
-### 3) List of all valid keys
+---
+### 4. List of all valid keys
 ####a) Nightly Summary Fits file
 #####From 'CATALOGUE' (per object):
 
@@ -168,8 +164,8 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
 
 
 
-
-### 4) Execution time comparison, pyfits vs cfitsio:
+---
+### 5. Execution time comparison, pyfits vs cfitsio:
 
 #####all objects, all times
     dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader='fitsio' )
