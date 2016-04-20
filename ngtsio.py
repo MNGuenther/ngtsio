@@ -607,11 +607,11 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
         if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
         elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
         else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
-    
-    
+        
         # in case OBJ_IDs was not part of the keys, remove it again
         if dont_save_obj_id == True:
             del dic['OBJ_ID']
+            keys.remove('OBJ_ID')
         
     return dic, keys
 
@@ -714,8 +714,19 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                         if singleobj_id in bls_data_objid:
                             i_bls = np.where( bls_data_objid == singleobj_id )[0]
                             dic[key][i] = bls_data[i_bls]
+            else:
+                # go through all subkeys
+                for key in subkeys:
+                    # initialize empty dictionary entry, size of all requested ind_objs
+                    dic[key] = np.zeros( len(ind_objs) )
      
-       
+
+
+    #::: output as numpy ndarrays
+    for key, value in dic.iteritems():
+        dic[key] = np.array(value)
+            
+    
     return dic
 
 
@@ -877,13 +888,14 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
             
         if subkeys.size!=0:
-            # Now, for this one, again INCLUDE OBJ_IDs in subkeys (as last subkey)
-            if 'OBJ_ID' not in subkeys: subkeys = np.append(subkeys, 'OBJ_ID')
-            
+                
             # see if any BLS candidates are in the list
             if len(ind_objs_bls)!=0:
-                bls_data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs_bls)
                 
+                # Now, for this one, again INCLUDE OBJ_IDs in subkeys (as last subkey)
+                if 'OBJ_ID' not in subkeys: subkeys = np.append(subkeys, 'OBJ_ID')
+                
+                bls_data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs_bls)
             # write them at the right place into the dictionary
                 # EXCLUDE OBJ_IDs from subkeys
                 if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
@@ -898,7 +910,11 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                         if singleobj_id in np.char.strip(bls_data['OBJ_ID']):
                             i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
                             dic[key][i] = bls_data[key][i_bls]
-
+            else:
+                # go through all subkeys
+                for key in subkeys:
+                    # initialize empty dictionary entry, size of all requested ind_objs
+                    dic[key] = np.zeros( len(ind_objs) )
     return dic
 
 
@@ -943,12 +959,16 @@ def check_dic(dic, keys):
 # MAIN
 ###############################################################################    
 if __name__ == '__main__':
-#    pass
-    print get( 'NG0304-1115', ['SYSREM_FLUX3','PERIOD'], obj_row=46 )
+    pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
 #    for key in dic:
 #        print '------------'
+#        print type(dic[key])
 #        print key, dic[key].shape
 #        print dic[key]
 #        print '------------'
     
+
+
+
+
