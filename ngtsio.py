@@ -587,11 +587,11 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
     if isinstance (keys, str): keys = [keys]
         
     #::: check ind_objs
-    if len(ind_objs) == 0:
+    if not isinstance(ind_objs, slice) and len(ind_objs) == 0:
         print ' --- Warning: None of the given objects found in the fits files. Return empty dictionary. --- '
         dic = {}
         
-    elif len(ind_time) == 0:
+    elif not isinstance(ind_time, slice) and len(ind_time) == 0:
         print ' --- Warning: None of the given times found in the fits files. Return empty dictionary. --- '
         dic = {}
         
@@ -943,7 +943,8 @@ def check_dic(dic, keys):
 # MAIN
 ###############################################################################    
 if __name__ == '__main__':
-    pass
+#    pass
+    print get( 'NG0304-1115', ['SYSREM_FLUX3','PERIOD'], obj_row=46 )
 #    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
 #    for key in dic:
 #        print '------------'
