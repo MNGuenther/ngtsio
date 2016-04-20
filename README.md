@@ -2,6 +2,8 @@
 Wrapper for astropy and cfitsio readers for NGTS data files. The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases.
 This readme contains:
 
+0) Installation
+
 1) Examples 
 
 2) Parameter descriptions
@@ -16,6 +18,18 @@ This readme contains:
     ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST10', fitsreader='pyfits'):
 
 Return a dictionary with all requested data for an NGTS field.
+
+
+### 0) Installation
+
+##### a) On ngtshead
+To always use the latest version on ngtshead, simply indclude the following lines at the top of your code:
+
+    import sys
+    sys.path.append('/home/maxg/bin/ngtsio')
+
+##### b) On another device
+The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases. Simply download and copy ngtsio.py into your pythonpath directory.
 
 
 
