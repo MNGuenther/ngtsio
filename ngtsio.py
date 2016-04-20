@@ -902,7 +902,7 @@ def check_dic(dic, keys):
 # MAIN
 ###############################################################################    
 if __name__ == '__main__':
-    
+    pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
 #    for key in dic:
 #        print '------------'
