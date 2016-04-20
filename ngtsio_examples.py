@@ -31,9 +31,9 @@ dic = ngtsio.get( 'NG0304-1115', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
 plt.figure()
 plt.plot( dic['CCD_X'], dic['CCD_Y'], 'k.' )
 
-#### c) Get the BLS results of some candidates (note that obj_id 1337 does not exist)
+#### c) Get the BLS results of some candidates (note that obj_id 11 is not a BLS candidate, and that obj_id 1337 does not exist at all)
 
-dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[46,49,54,1337] )
+dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[11,46,49,54,1337] )
 print dic
 
 #### d) Get and print a bunch of keys for various non-standard settings

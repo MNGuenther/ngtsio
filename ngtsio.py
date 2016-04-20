@@ -589,6 +589,11 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
 
     #::: keys
     if isinstance (keys, str): keys = [keys]
+    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
+    dont_save_obj_id = False
+    if 'OBJ_ID' not in keys: 
+        dont_save_obj_id = True
+        keys.append('OBJ_ID')       
         
     #::: dictionary
     dic = {}
@@ -681,7 +686,12 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                             i_bls = np.where( bls_data_objid == singleobj_id )[0]
                             dic[key][i] = bls_data[i_bls]
 
-    
+
+
+    if dont_save_obj_id == True:
+        del dic['OBJ_ID']
+     
+       
     return dic
 
 
@@ -694,6 +704,11 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
  
     #::: keys
     if isinstance (keys, str): keys = [keys]
+    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
+    dont_save_obj_id = False
+    if 'OBJ_ID' not in keys: 
+        dont_save_obj_id = True
+        keys.append('OBJ_ID')
         
     #::: dictionary
     dic = {}
@@ -867,6 +882,11 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                         if singleobj_id in np.char.strip(bls_data['OBJ_ID']):
                             i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
                             dic[key][i] = bls_data[key][i_bls]
+
+
+
+    if dont_save_obj_id == True:
+        del dic['OBJ_ID']
         
     return dic
 
