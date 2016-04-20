@@ -74,7 +74,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     
     #::: objects    
     ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing)
-        
+    
     #::: time
     ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid)
     
@@ -258,7 +258,7 @@ def get_indobjs_from_objids(fnames, obj_list):
         for obj_id in obj_list:
             if obj_id not in obj_ids:
 #                print '--- Warning: obj_id',obj_id,'not found in fits file. ---'  
-                warning = 'Warning: obj_id '+str(obj_id)+' not found in fits file.'
+                warning = ' --- Warning: obj_id '+str(obj_id)+' not found in fits file. --- '
                 print warning
 #                sys.exit(warning)
                 #TODO raise proper warning/error
@@ -582,25 +582,36 @@ def get_time_actionid_from_range(actionid_range):
 # get dictionary with fitsio/pyfits getters 
 ###############################################################################
 def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
-    
-    #::: keys
+
+    #::: check keys
     if isinstance (keys, str): keys = [keys]
         
-    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
-    dont_save_obj_id = False
-    if 'OBJ_ID' not in keys: 
-        dont_save_obj_id = True
-        keys.append('OBJ_ID')   
-
+    #::: check ind_objs
+    if len(ind_objs) == 0:
+        print ' --- Warning: None of the given objects found in the fits files. Return empty dictionary. --- '
+        dic = {}
         
-    if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
-    elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
-    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
-
-
-    # in case OBJ_IDs was not part of the keys, remove it again
-    if dont_save_obj_id == True:
-        del dic['OBJ_ID']
+    elif len(ind_time) == 0:
+        print ' --- Warning: None of the given times found in the fits files. Return empty dictionary. --- '
+        dic = {}
+        
+    else:
+            
+        # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
+        dont_save_obj_id = False
+        if 'OBJ_ID' not in keys: 
+            dont_save_obj_id = True
+            keys.append('OBJ_ID')   
+    
+            
+        if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
+        elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
+        else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
+    
+    
+        # in case OBJ_IDs was not part of the keys, remove it again
+        if dont_save_obj_id == True:
+            del dic['OBJ_ID']
         
     return dic, keys
 
@@ -910,9 +921,19 @@ def simplify_dic(dic):
 ###############################################################################  
 def check_dic(dic, keys):
     
+    print '###############################################################################'
+            
+    fail = False
     for key in keys:
         if key not in dic:
-            print ' --- Warning: key',key,'not found in fits files. ---'
+            print 'Failure: key',key,'not read into dictionary.'
+            fail = True
+    
+    if fail == False:
+        print 'Success: All keys successfully read into dictionary.'
+        
+    print '###############################################################################'
+        
         
     return
     
