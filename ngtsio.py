@@ -79,9 +79,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid)
     
     #::: get dictionary
-    if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
-    elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
-    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
+    dic, keys = get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader)
     
     #::: simplify output if only for 1 object
     if simplify==True: dic = simplify_dic(dic)
@@ -581,20 +579,40 @@ def get_time_actionid_from_range(actionid_range):
     
 
 ###############################################################################
+# get dictionary with fitsio/pyfits getters 
+###############################################################################
+def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
+    
+    #::: keys
+    if isinstance (keys, str): keys = [keys]
+        
+    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
+    dont_save_obj_id = False
+    if 'OBJ_ID' not in keys: 
+        dont_save_obj_id = True
+        keys.append('OBJ_ID')   
+
+        
+    if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
+
+
+    # in case OBJ_IDs was not part of the keys, remove it again
+    if dont_save_obj_id == True:
+        del dic['OBJ_ID']
+        
+    return dic, keys
+
+
+
+###############################################################################
 # pyfits getter 
 ###############################################################################
 
 
 def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
-
-    #::: keys
-    if isinstance (keys, str): keys = [keys]
-    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
-    dont_save_obj_id = False
-    if 'OBJ_ID' not in keys: 
-        dont_save_obj_id = True
-        keys.append('OBJ_ID')       
-        
+     
     #::: dictionary
     dic = {}
     
@@ -685,11 +703,6 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                         if singleobj_id in bls_data_objid:
                             i_bls = np.where( bls_data_objid == singleobj_id )[0]
                             dic[key][i] = bls_data[i_bls]
-
-
-
-    if dont_save_obj_id == True:
-        del dic['OBJ_ID']
      
        
     return dic
@@ -701,14 +714,6 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
 # fitsio getter 
 ###############################################################################
 def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
- 
-    #::: keys
-    if isinstance (keys, str): keys = [keys]
-    # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
-    dont_save_obj_id = False
-    if 'OBJ_ID' not in keys: 
-        dont_save_obj_id = True
-        keys.append('OBJ_ID')
         
     #::: dictionary
     dic = {}
@@ -883,11 +888,6 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                             i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
                             dic[key][i] = bls_data[key][i_bls]
 
-
-
-    if dont_save_obj_id == True:
-        del dic['OBJ_ID']
-        
     return dic
 
 
