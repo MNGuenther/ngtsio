@@ -13,11 +13,8 @@ Email: mg719@cam.ac.uk
 
 import astropy.io.fits as pyfits
 import fitsio
-import os, sys, glob, copy, collections, datetime, timeit
-
-import matplotlib.pyplot as plt
+import os, sys, glob, copy, collections, datetime
 import numpy as np
-from scipy import stats as sp
 
 
 
@@ -967,8 +964,3 @@ if __name__ == '__main__':
 #        print key, dic[key].shape
 #        print dic[key]
 #        print '------------'
-    
-
-
-
-
