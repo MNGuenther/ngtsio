@@ -66,25 +66,34 @@ From 'CANDIDATE' data (only for candidates):
 
 def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=[], ngts_version='TEST10'):
     
+    print 'Field name:', fieldname      
+
     #::: filenames
     if len(fnames)==0: fnames = standard_fnames(fieldname)
     
-    #::: objects    
-    ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing)
-    
-    #::: time
-    ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid)
-    
-    #::: get dictionary
-    dic, keys = get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader)
-    
-    #::: simplify output if only for 1 object
-    if simplify==True: dic = simplify_dic(dic)
+    if check_files(fnames):
         
-    #::: check if all keys were retrieved
-    check_dic(dic, keys)
+        #::: objects    
+        ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, obj_sortby = 'obj_ids')
+        print 'Object IDs:', obj_ids
+        
+        #::: time
+        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid)
+        
+        #::: get dictionary
+        dic, keys = get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader)
+        
+        #::: simplify output if only for 1 object
+        if simplify==True: dic = simplify_dic(dic)
+            
+        #::: check if all keys were retrieved
+        check_dic(dic, keys)
     
-    return dic
+        return dic
+        
+    else:
+        
+        return None
 
 
  
@@ -112,32 +121,48 @@ def standard_fnames(fieldname, ngts_version='TEST10'):
         fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
         fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
     except:
+        fnames = None
         print '>>> '+fieldname+': Fits files do not exist.'
 
     return fnames
    
-            
+ 
+
+def check_files(fnames):
+    
+    if fnames!=None and os.path.isfile(fnames['nights']) and os.path.isfile(fnames['sysrem']) and os.path.isfile(fnames['bls']):
+        return True
+    else:
+        return False         
+ 
+ 
  
 ###############################################################################
 # Object Input Formatting
 ###############################################################################        
     
-def get_obj_inds(fnames, obj_ids, obj_rows, indexing):
+def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
+    
+    inputtype = None
     
     #::: if no input is given, use all objects
-    if obj_ids == None and obj_rows == None:
+    if obj_ids is None and obj_rows is None:
         
+        inputtype = None
         ind_objs = slice(None)
         obj_ids = get_objids_from_indobjs(fnames, ind_objs)
         
     
     #::: if obj_id is given    
-    elif obj_ids != None and obj_rows == None:    
+    elif obj_ids is not None and obj_rows is None:    
             
+        inputtype = 'obj_ids'
+        
         # b) test if non-empty list
         if isinstance(obj_ids, (collections.Sequence, np.ndarray)) and not isinstance(obj_ids, (str, unicode)) and len(obj_ids) > 0:
             # if list of integer or float -> convert to list of str            
             if not isinstance(obj_ids[0], str):
+                obj_ids = map(int, obj_ids)
                 obj_ids = map(str, obj_ids)
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
@@ -181,7 +206,9 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing):
             
             
     #::: if obj_row is given
-    elif obj_ids == None and obj_rows != None:
+    elif obj_ids is None and obj_rows is not None:
+        
+        inputtype = 'ind_objs'
         
         ind_objs = obj_rows
         
@@ -240,8 +267,37 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing):
         warning = 'Only use either "obj_id" or "obj_row".'
         sys.exit(warning)
         
+       
         
-    #::: return        
+    if inputtype is not None:
+        
+        #::: typecast to numpy arrays        
+        obj_ids = np.array(obj_ids) 
+        ind_objs = np.array(ind_objs)        
+        
+        #::: sort
+        #TODO: UNCLEAN!!! This currently assumes the object IDs in the fits files are sorted like the row number!!!
+        
+        ind_objs = np.sort(ind_objs)
+        obj_ids = np.sort(obj_ids)
+        
+#        if obj_sortby == 'obj_ids':
+#            ind_sort = np.argsort( obj_ids )
+#            obj_ids = obj_ids[ind_sort]
+#            ind_objs = ind_objs[ind_sort]
+#            
+#        elif obj_sortby == 'ind_objs':
+#            ind_sort = np.argsort( ind_objs )
+#            obj_ids = obj_ids[ind_sort]
+#            ind_objs = ind_objs[ind_sort]
+#            
+#        elif obj_sortby == 'original':
+#            if inputtype == 'obj_ids':
+#                pass
+                #TODO: allow to keep the sorting of the input, e.g.  OBJ_IDs ['001337','000001'] corresponding to IND_OBJS [100, 1]
+        
+        
+    #::: return     
     return ind_objs, obj_ids
         
         
@@ -249,7 +305,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing):
 def get_indobjs_from_objids(fnames, obj_list):
     with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
         ind_objs = np.in1d(hdulist['CATALOGUE'].data['OBJ_ID'].strip(), obj_list, assume_unique=True).nonzero()[0]
-        obj_ids = copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+        obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
         del hdulist['CATALOGUE'].data
         
         for obj_id in obj_list:
@@ -266,7 +322,7 @@ def get_indobjs_from_objids(fnames, obj_list):
     
 def get_objids_from_indobjs(fnames, ind_objs):
     with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        obj_ids = copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+        obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
         del hdulist['CATALOGUE'].data
         
     obj_ids = objid_6digit(obj_ids)
@@ -292,12 +348,12 @@ def objid_6digit(obj_list):
 
 def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
     
-    if time_index == None and time_date == None and time_hjd == None and time_actionid == None:
+    if time_index is None and time_date is None and time_hjd is None and time_actionid is None:
         ind_time = slice(None)
         
         
         
-    elif time_index != None and time_date == None and time_hjd == None and time_actionid == None:
+    elif time_index is not None and time_date is None and time_hjd is None and time_actionid is None:
         # A) test if file 
         if isinstance(time_index, str) and os.path.isfile(time_index):
             # load the file
@@ -307,11 +363,16 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
                 time_index = [time_index]
 
         # B) work with the data
-        ind_time = time_index
+
+        # if not list, make list
+        if not isinstance(time_hjd, (tuple, list, np.ndarray)):
+            ind_time = [time_index]
+        else:
+            ind_time = time_index
         
         
         
-    elif time_index == None and time_date != None and time_hjd == None and time_actionid == None:
+    elif time_index is None and time_date is not None and time_hjd is None and time_actionid is None:
         
         # A) test if file 
         if isinstance(time_date, str) and os.path.isfile(time_date):
@@ -370,7 +431,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
             
             
     
-    elif time_index == None and time_date == None and time_hjd != None and time_actionid == None:
+    elif time_index is None and time_date is None and time_hjd is not None and time_actionid is None:
         
         # A) test if file 
         if isinstance(time_hjd, str) and os.path.isfile(time_hjd):
@@ -396,7 +457,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
             
             
             
-    elif time_index == None and time_date == None and time_hjd == None and time_actionid != None:
+    elif time_index is None and time_date is None and time_hjd is None and time_actionid is not None:
        
        # A) test if file 
         if isinstance(time_actionid, str) and os.path.isfile(time_actionid):
@@ -595,9 +656,9 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
     else:
             
         # in case OBJ_IDs was not part of the keys, add it to have array sizes/indices that are always confirm with the nightly fits files
-        dont_save_obj_id = False
+#        dont_save_obj_id = False
         if 'OBJ_ID' not in keys: 
-            dont_save_obj_id = True
+#            dont_save_obj_id = True
             keys.append('OBJ_ID')   
     
             
@@ -605,10 +666,24 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
         elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
         else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
         
+        #TODO: make clear that from now on OBJ_IDs is always part of the dictionary!
         # in case OBJ_IDs was not part of the keys, remove it again
-        if dont_save_obj_id == True:
-            del dic['OBJ_ID']
-            keys.remove('OBJ_ID')
+#        if dont_save_obj_id == True:
+#            del dic['OBJ_ID']
+#            keys.remove('OBJ_ID')
+        
+        
+        #TODO: read out dimensions
+#        if not isinstance(ind_objs, slice):
+#            dic['N_objects'] = np.array( [len(ind_objs)] )
+#        else:
+#            dic['N_objects'] = np.array( [np.nan] )
+#            
+#        if not isinstance(ind_time, slice): 
+#            dic['N_times'] = np.array( [len(ind_time)] )
+#        else:
+#            dic['N_times'] = np.array( [np.nan] )
+            
         
     return dic, keys
 
@@ -631,14 +706,14 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         hdukey = 'CATALOGUE'
         hdu = hdulist[hdukey].data
         for key in np.intersect1d(hdu.names, keys):
-            dic[key] = copy.deepcopy( hdu[key][ind_objs] )
+            dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
         del hdu, hdulist[hdukey].data
             
         #::: IMAGELIST
         hdukey = 'IMAGELIST'
         hdu = hdulist[hdukey].data
         for key in np.intersect1d(hdu.names, keys):
-            dic[key] = copy.deepcopy( hdu[key][ind_time] )
+            dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
         del hdu, hdulist[hdukey].data
         
         #::: DATA HDUs
@@ -646,7 +721,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             hdukey = hdukeyinfo[1]
             if hdukey in keys:
                 key = hdukey
-                dic[key] = copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] ) #in s
+                dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
                 if key in ['CCDX','CCDY']:
                     dic[key] = (dic[key] + CCD_bzero) / CCD_precision
                 if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
@@ -661,7 +736,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         for i, hdukey in enumerate(hdulist_sysrem.info(output=False)):
             if hdukey[1] in keys:
                 key = hdukey[1]
-                dic[key] = copy.deepcopy( hdulist_sysrem[key].data[ind_objs][:,ind_time] )#in s
+                dic[key] = hdulist_sysrem[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist_sysrem[key].data[ind_objs][:,ind_time] )#in s
                 del hdulist_sysrem[key].data
                 
         del hdulist_sysrem
@@ -682,7 +757,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         hdu = hdulist_bls[hdukey].data
         for key in np.intersect1d(hdu.names, keys):
             if key!='OBJ_ID':
-                dic[key] = copy.deepcopy( hdu[key][ind_objs] )
+                dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
         del hdu, hdulist_bls[hdukey].data
         
 
@@ -761,7 +836,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
             if isinstance(subkeys, str): subkeys = [subkeys]
             for key in subkeys:
-                dic[key] = copy.deepcopy( data[key] )
+                dic[key] = data[key] #copy.deepcopy( data[key] )
             del data
         
         #::: IMAGELIST
@@ -772,7 +847,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
             if isinstance(subkeys, str): subkeys = [subkeys]
             for key in subkeys:
-                dic[key] = copy.deepcopy( data[key] )
+                dic[key] = data[key] #copy.deepcopy( data[key] )
             del data
             
         # TODO: very inefficient - reads out entire image first, then cuts
@@ -873,7 +948,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs)
             if isinstance(subkeys, str): subkeys = [subkeys]
             for key in subkeys:
-                dic[key] = copy.deepcopy( data[key] )
+                dic[key] = data[key] #copy.deepcopy( data[key] )
             del data
         
         
@@ -912,6 +987,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                 for key in subkeys:
                     # initialize empty dictionary entry, size of all requested ind_objs
                     dic[key] = np.zeros( len(ind_objs) )
+                    
     return dic
 
 
@@ -924,6 +1000,8 @@ def simplify_dic(dic):
     for key, value in dic.iteritems():
         if value.shape[0] == 1:
             dic[key] = value[0]
+        elif (len(value.shape) > 1) and (value.shape[1] == 1):
+            dic[key] = value[:,0]
         
     return dic
     
