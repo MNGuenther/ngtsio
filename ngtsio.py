@@ -74,11 +74,11 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     if check_files(fnames):
         
         #::: objects    
-        ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, obj_sortby = 'obj_ids')
+        ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
         print 'Object IDs:', obj_ids
         
         #::: time
-        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid)
+        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader)
         
         #::: get dictionary
         dic, keys = get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader)
@@ -141,21 +141,22 @@ def check_files(fnames):
 # Object Input Formatting
 ###############################################################################        
     
-def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
+def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'obj_ids'):
     
     inputtype = None
+    
     
     #::: if no input is given, use all objects
     if obj_ids is None and obj_rows is None:
         
         inputtype = None
         ind_objs = slice(None)
-        obj_ids = get_objids_from_indobjs(fnames, ind_objs)
+        obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
         
     
     #::: if obj_id is given    
-    elif obj_ids is not None and obj_rows is None:    
-            
+    elif obj_ids is not None and obj_rows is None:   
+        
         inputtype = 'obj_ids'
         
         # b) test if non-empty list
@@ -167,7 +168,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids)
+            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
+            
             
         #c) test if file
         elif isinstance(obj_ids, str) and os.path.isfile(obj_ids):
@@ -179,25 +181,48 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids)
+            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
+            
             
         # d) test if str
         elif isinstance(obj_ids, str) and not os.path.isfile(obj_ids):
-            # cast to list
-            obj_ids = [obj_ids]
-            # give all strings 6 digits
-            obj_ids = objid_6digit(obj_ids)
-            # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids)
             
+            # d1) a single value given as a string
+            if obj_ids != 'bls':
+                # cast to list
+                obj_ids = [obj_ids]
+                # give all strings 6 digits
+                obj_ids = objid_6digit(obj_ids)
+            
+            #d2) the command 'bls' which reads out all 'bls' candidates
+            else:               
+                if fitsreader=='astropy' or fitsreader=='pyfits':
+                    with pyfits.open(fnames['bls'], mode='denywrite') as hdulist:
+                        obj_ids = np.unique( hdulist['CANDIDATES'].data['OBJ_ID'].strip() )
+                        del hdulist['CANDIDATES'].data
+                
+                elif fitsreader=='fitsio' or fitsreader=='cfitsio':     
+                    with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
+                        obj_ids = np.unique( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')) )
+
+                else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+
+            # connect obj_ids to ind_objs
+            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)          
+                
+                
         # e) test if int/float
         elif isinstance(obj_ids, (int, float)):
+            print 'here'
             # cast to list of type str
             obj_ids = [ str(int(obj_ids)) ]
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids)
+            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
+            print obj_ids
+            print ind_objs
+        
         
         # problems:
         else:
@@ -221,7 +246,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
-            obj_ids = get_objids_from_indobjs(fnames, ind_objs)
+            obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
             
         # b) test if file
         elif isinstance(ind_objs, str) and os.path.isfile(ind_objs):
@@ -231,7 +256,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
-            obj_ids = get_objids_from_indobjs(fnames, ind_objs)
+            obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
             
         # c) test if str
         elif isinstance(ind_objs, str) and not os.path.isfile(ind_objs):
@@ -241,7 +266,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
-            obj_ids = get_objids_from_indobjs(fnames, ind_objs)
+            obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
             
         # d) test if int/float 
         elif isinstance(ind_objs, (int, float)):
@@ -251,7 +276,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
-            obj_ids = get_objids_from_indobjs(fnames, ind_objs)
+            obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
 
         
         # problems:
@@ -302,30 +327,47 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing, obj_sortby = 'obj_ids'):
         
         
         
-def get_indobjs_from_objids(fnames, obj_list):
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        ind_objs = np.in1d(hdulist['CATALOGUE'].data['OBJ_ID'].strip(), obj_list, assume_unique=True).nonzero()[0]
-        obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-        del hdulist['CATALOGUE'].data
-        
-        for obj_id in obj_list:
-            if obj_id not in obj_ids:
-#                print '--- Warning: obj_id',obj_id,'not found in fits file. ---'  
-                warning = ' --- Warning: obj_id '+str(obj_id)+' not found in fits file. --- '
-                print warning
-#                sys.exit(warning)
-                #TODO raise proper warning/error
-        
+def get_indobjs_from_objids(fnames, obj_list, fitsreader):
+            
+    if fitsreader=='astropy' or fitsreader=='pyfits':
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+            obj_ids_all = hdulist['CATALOGUE'].data['OBJ_ID'].strip()
+            del hdulist['CATALOGUE'].data
+            
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+            obj_ids_all = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') )#indices of the candidates
+
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+          
+    ind_objs = np.in1d(obj_ids_all, obj_list, assume_unique=True).nonzero()[0]
+            
+    #::: check if all obj_ids were read out       
+    for obj_id in obj_list:
+        if obj_id not in obj_ids_all[ind_objs]:
+            warning = ' --- Warning: obj_id '+str(obj_id)+' not found in fits file. --- '
+            print warning 
+            
+          
     return ind_objs
     
     
     
-def get_objids_from_indobjs(fnames, ind_objs):
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-        del hdulist['CATALOGUE'].data
+def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
+
+    if fitsreader=='astropy' or fitsreader=='pyfits':
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+            obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+            del hdulist['CATALOGUE'].data
         
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+            obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+                               
     obj_ids = objid_6digit(obj_ids)
+    
     
     return obj_ids
     
@@ -346,7 +388,7 @@ def objid_6digit(obj_list):
 # Time Input Formatting
 ###############################################################################
 
-def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
+def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader):
     
     if time_index is None and time_date is None and time_hjd is None and time_actionid is None:
         ind_time = slice(None)
@@ -397,7 +439,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
                 warning = '"time_date" format not understood.'
                 sys.exit(warning)
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
         
         # c) test if int/float 
         elif isinstance(time_date, (int, float)):
@@ -406,7 +448,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
             # format
             time_date = time_date[0:4]+'-'+time_date[4:6]+'-'+time_date[6:]
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
             
         # d) test if str
         elif isinstance(time_date, str):
@@ -417,7 +459,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
                 
             # if single date, format if necessary
             elif len(time_date) == 10:
-                time_date = [ x.replace('/','-') for x in time_date ]
+                time_date = time_date.replace('/','-')
                 
             # if dates are given in a range ('20151104:20160101' or '2015-11-04:2016-01-01')
             elif len(time_date) > 10:
@@ -427,7 +469,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
                 sys.exit('Invalid format of value "time_date". Use e.g. 20151104, "20151104", "2015-11-04" or a textfile name like "dates.txt".')
                 
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
             
             
     
@@ -448,12 +490,12 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
             if isinstance(time_hjd[0], (str,float)):
                 time_hjd = map(int, time_hjd)
             # connect obj_ids to ind_objs
-            ind_time = get_indtime_from_timehjd(fnames, time_hjd)        
+            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader)        
   
        # b) test if str/int/float 
         if isinstance(time_hjd, (str, int, float)):
             time_hjd = int(time_hjd)
-            ind_time = get_indtime_from_timehjd(fnames, time_hjd)
+            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader)
             
             
             
@@ -471,14 +513,14 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
             if isinstance(time_actionid[0], (str,float)):
                 time_actionid = map(int, time_actionid)
             # connect to ind_time
-            ind_time = get_indtime_from_timeactionid(fnames, time_actionid)
+            ind_time = get_indtime_from_timeactionid(fnames, time_actionid, fitsreader)
         
         # c) test if int/float
         elif isinstance(time_actionid, (int, float)):
             # convert to int
             time_actionid = int(time_actionid)
             # connect to ind_time
-            ind_time = get_indtime_from_timeactionid(fnames, time_actionid)
+            ind_time = get_indtime_from_timeactionid(fnames, time_actionid, fitsreader)
             
         # d) test if str
         elif isinstance(time_actionid, str):
@@ -488,11 +530,11 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
                 time_actionid = int(time_actionid)
                 
             # if actionids are given in a range ('108583:108600')
-            if len(time_actionid) > 6:
+            elif len(time_actionid) > 6:
                 time_actionid = get_time_actionid_from_range(time_actionid)
                 
             # connect to ind_time
-            ind_time = get_indtime_from_timeactionid(fnames, time_actionid)     
+            ind_time = get_indtime_from_timeactionid(fnames, time_actionid, fitsreader)     
                 
     else: 
         warning = 'Only use either "time_index" or "time_date" or "time_hjd" or "time_actionid".'
@@ -502,60 +544,107 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid):
 
 
 
-def get_indtime_from_timedate(fnames, time_date):
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        ind_time = np.in1d(hdulist['IMAGELIST'].data['DATE-OBS'].strip(), time_date).nonzero()[0]
-        
-        # if not list, make list
-        if not isinstance(time_date, (tuple, list, np.ndarray)):
-            time_date = [time_date]
+def get_indtime_from_timedate(fnames, time_date, fitsreader):
+    
+    # if not list, make list
+    if not isinstance(time_date, (tuple, list, np.ndarray)):
+        time_date = [time_date]
+    
             
-        for date in time_date:
-            if date not in hdulist['IMAGELIST'].data['DATE-OBS'][ind_time].strip():
-                warning = 'Date '+ date +' not found in fits file.'
-                print warning
-#                sys.exit(warning)
-                #TODO raise proper warning/error      
-        del hdulist['IMAGELIST'].data
-        
+    if fitsreader=='astropy' or fitsreader=='pyfits':
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+            time_date_all = hdulist['IMAGELIST'].data['DATE-OBS'].strip()
+            del hdulist['IMAGELIST'].data           
+            
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+            time_date_all = np.char.strip( hdulist['IMAGELIST'].read(columns='DATE-OBS') )
+
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+
+    ind_time = np.in1d(time_date_all, time_date).nonzero()[0]   
+  
+     
+    #::: check if all dates were found in fits file   
+    for date in time_date:
+        if date not in time_date_all[ind_time]:
+            warning = 'Date '+ date +' not found in fits file.'
+            print warning    
+      
+    #::: clean up      
+    del time_date_all
+            
+            
     return ind_time
     
     
     
-def get_indtime_from_timehjd(fnames, time_hjd):
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        ind_time = np.in1d(np.int64(hdulist['HJD'].data[0]/3600./24.), time_hjd).nonzero()[0]
+def get_indtime_from_timehjd(fnames, time_hjd, fitsreader):
+    
+    # if not list, make list
+    if not isinstance(time_hjd, (tuple, list, np.ndarray)):
+        time_hjd = [time_hjd]
 
-        # if not list, make list
-        if not isinstance(time_hjd, (tuple, list, np.ndarray)):
-            time_hjd = [time_hjd]
-            
-        for hjd in time_hjd:
-            if hjd not in np.int64(hdulist['HJD'].data[0][ind_time]/3600./24.):
-                warning = 'Date-HJD '+ hjd +' not found in fits file.'
-                sys.exit(warning)
-                #TODO raise proper warning/error      
-        del hdulist['IMAGELIST'].data
+
+    if fitsreader=='astropy' or fitsreader=='pyfits':            
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+            time_hjd_all = np.int64( hdulist['HJD'].data[0]/3600./24. )
+            del hdulist['IMAGELIST'].data
         
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+            time_hjd_all = np.int64( hdulist['HJD'][0,:]/3600./24. )[0]
+            
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+
+    ind_time = np.in1d(time_hjd_all, time_hjd).nonzero()[0] 
+     
+
+    #::: check if all dates were found in fits file        
+    for hjd in time_hjd:
+        if hjd not in time_hjd_all[ind_time]:
+            warning = 'Date-HJD '+ hjd +' not found in fits file.'
+            sys.exit(warning)
+   
+    #::: clean up      
+    del time_hjd_all   
+   
+   
     return ind_time
 
 
 
-def get_indtime_from_timeactionid(fnames, time_actionid):
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        ind_time = np.in1d(hdulist['IMAGELIST'].data['ACTIONID'], time_actionid).nonzero()[0]
+def get_indtime_from_timeactionid(fnames, time_actionid, fitsreader):
+    
+    print 'hereeeee'
+       
+    # if not list, make list
+    if not isinstance(time_actionid, (tuple, list, np.ndarray)):
+        time_actionid = [time_actionid]
+
+
+    if fitsreader=='astropy' or fitsreader=='pyfits':                    
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+            time_actionid_all = hdulist['IMAGELIST'].data['ACTIONID']    
+            del hdulist['IMAGELIST'].data
         
-        # if not list, make list
-        if not isinstance(time_actionid, (tuple, list, np.ndarray)):
-            time_actionid = [time_actionid]
+    elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+            time_actionid_all = hdulist['IMAGELIST'].read(columns='ACTIONID')  
+
+    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
             
-        for actionid in time_actionid:
-            if actionid not in hdulist['IMAGELIST'].data['ACTIONID'][ind_time]:
-                warning = 'Action-ID '+ str(actionid) +' not found in fits file.'
-                print warning
+    ind_time = np.in1d(time_actionid_all, time_actionid).nonzero()[0]
+    
+        
+    for actionid in time_actionid:
+        if actionid not in time_actionid_all[ind_time]:
+            warning = 'Action-ID '+ str(actionid) +' not found in fits file.'
+            print warning
 #                sys.exit(warning)
-                #TODO raise proper warning/error      
-        del hdulist['IMAGELIST'].data
+            #TODO raise proper warning/error  
+            
+    del time_actionid_all
         
     return ind_time
     
@@ -780,7 +869,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                     
                     # write them at the right place into the dictionary
                     # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( len(ind_objs) )
+                    dic[key] = np.zeros( len(ind_objs) ) * np.nan
                     # go through all requested obj_ids
                     for i, singleobj_id in enumerate(obj_ids):
                         if singleobj_id in bls_data_objid:
@@ -1035,7 +1124,7 @@ def check_dic(dic, keys):
 ###############################################################################    
 if __name__ == '__main__':
     pass
-#    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_id='bls', fitsreader='fitsio', time_hjd=['700','703'])
 #    for key in dic:
 #        print '------------'
 #        print type(dic[key])
