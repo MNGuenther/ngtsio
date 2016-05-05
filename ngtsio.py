@@ -362,7 +362,8 @@ def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
         
     elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
         with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
-            obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+            if isinstance(ind_objs, slice):  obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+            else:  obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
                                
@@ -1124,6 +1125,7 @@ def check_dic(dic, keys):
 ###############################################################################    
 if __name__ == '__main__':
     pass
+    print get( 'NG0522-2518', ['DATE-OBS','NIGHT'] )
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_id='bls', fitsreader='fitsio', time_hjd=['700','703'])
 #    for key in dic:
 #        print '------------'
