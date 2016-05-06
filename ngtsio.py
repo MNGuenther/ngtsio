@@ -64,9 +64,9 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=[], ngts_version='TEST10'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=[], silent=False, ngts_version='TEST10'):
     
-    print 'Field name:', fieldname      
+    if silent==False: print 'Field name:', fieldname      
 
     #::: filenames
     if len(fnames)==0: fnames = standard_fnames(fieldname)
@@ -75,7 +75,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         
         #::: objects    
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
-        print 'Object IDs:', obj_ids
+        if silent==False: print 'Object IDs:', obj_ids
         
         #::: time
         ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader)
@@ -87,7 +87,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         if simplify==True: dic = simplify_dic(dic)
             
         #::: check if all keys were retrieved
-        check_dic(dic, keys)
+        check_dic(dic, keys, silent)
     
         return dic
         
@@ -146,15 +146,19 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
     inputtype = None
     
     
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     #::: if no input is given, use all objects
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     if obj_ids is None and obj_rows is None:
         
         inputtype = None
         ind_objs = slice(None)
         obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
         
-    
+        
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     #::: if obj_id is given    
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     elif obj_ids is not None and obj_rows is None:   
         
         inputtype = 'obj_ids'
@@ -164,11 +168,14 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             # if list of integer or float -> convert to list of str            
             if not isinstance(obj_ids[0], str):
                 obj_ids = map(int, obj_ids)
+                if not all(x>0 for x in obj_ids):
+                    warning = '"obj_id" data type not understood.'
+                    sys.exit(warning)
                 obj_ids = map(str, obj_ids)
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
+            ind_objs, obj_ids = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
             
             
         #c) test if file
@@ -181,7 +188,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
+            ind_objs, obj_ids = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
             
             
         # d) test if str
@@ -208,29 +215,28 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
                 else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
 
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)          
+            ind_objs, obj_ids = get_indobjs_from_objids(fnames, obj_ids, fitsreader)          
                 
                 
         # e) test if int/float
-        elif isinstance(obj_ids, (int, float)):
-            print 'here'
+        elif isinstance(obj_ids, (int, float)) and obj_ids>=0:
             # cast to list of type str
             obj_ids = [ str(int(obj_ids)) ]
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
             # connect obj_ids to ind_objs
-            ind_objs = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
-            print obj_ids
-            print ind_objs
+            ind_objs, obj_ids = get_indobjs_from_objids(fnames, obj_ids, fitsreader)
         
         
         # problems:
         else:
-            print '--- Warning: "obj_id" data type not understood. ---'
-            sys.exit()
+            warning = '"obj_id" data type not understood.'
+            sys.exit(warning)
             
-            
+    
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::        
     #::: if obj_row is given
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     elif obj_ids is None and obj_rows is not None:
         
         inputtype = 'ind_objs'
@@ -286,14 +292,20 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             sys.exit(warning)
             
             
-    #::: if obj_id and obj_row are both given        
+    
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    #::: if obj_id and obj_row are both given   
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::     
     else: 
 #        print '--- Warning: Only use either "obj_id" or "obj_row". ---'
         warning = 'Only use either "obj_id" or "obj_row".'
         sys.exit(warning)
         
        
-        
+    
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    #:::
+    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::    
     if inputtype is not None:
         
         #::: typecast to numpy arrays        
@@ -347,9 +359,12 @@ def get_indobjs_from_objids(fnames, obj_list, fitsreader):
         if obj_id not in obj_ids_all[ind_objs]:
             warning = ' --- Warning: obj_id '+str(obj_id)+' not found in fits file. --- '
             print warning 
-            
-          
-    return ind_objs
+    
+    #::: truncate the list of obj_ids, remove obj_ids that are not in fits files     
+    obj_ids = obj_ids_all[ind_objs]    
+    del obj_ids_all
+    
+    return ind_objs, obj_ids 
     
     
     
@@ -617,8 +632,6 @@ def get_indtime_from_timehjd(fnames, time_hjd, fitsreader):
 
 def get_indtime_from_timeactionid(fnames, time_actionid, fitsreader):
     
-    print 'hereeeee'
-       
     # if not list, make list
     if not isinstance(time_actionid, (tuple, list, np.ndarray)):
         time_actionid = [time_actionid]
@@ -785,7 +798,7 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
 
 
 def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
-     
+    
     #::: dictionary
     dic = {}
     
@@ -830,8 +843,8 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                 del hdulist_sysrem[key].data
                 
         del hdulist_sysrem
-        
-        
+    
+    
     
     with pyfits.open(fnames['bls'], mode='denywrite') as hdulist_bls:
         
@@ -855,8 +868,10 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         hdukey = 'CANDIDATES'    
         hdu = hdulist_bls[hdukey].data
         subkeys = np.intersect1d(hdu.names, keys)
+        N_objs = len(dic['OBJ_ID'])
         # EXCLUDE OBJ_IDs from subkeys
         if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+        if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
             
         if subkeys.size!=0:            
             # see if any BLS candidates are in the list
@@ -870,7 +885,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                     
                     # write them at the right place into the dictionary
                     # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( len(ind_objs) ) * np.nan
+                    dic[key] = np.zeros( N_objs ) * np.nan
                     # go through all requested obj_ids
                     for i, singleobj_id in enumerate(obj_ids):
                         if singleobj_id in bls_data_objid:
@@ -880,7 +895,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                 # go through all subkeys
                 for key in subkeys:
                     # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( len(ind_objs) )
+                    dic[key] = np.zeros( N_objs )
      
 
 
@@ -907,6 +922,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
     
     with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
         
+        #::: fitsio does not work with slice arguments, convert to list
         allobjects = False
         if isinstance (ind_objs, slice):
             N_objs = int( hdulist['CATALOGUE'].get_nrows() )
@@ -980,7 +996,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                 break
                 
             
-
+            
     ##################### fnames['sysrem'] #####################
                 
     with fitsio.FITS(fnames['sysrem'], vstorage='object') as hdulist_sysrem:
@@ -1034,6 +1050,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         subkeys = np.intersect1d(hdunames, keys)
         # EXCLUDE OBJ_IDs from subkeys
         if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+            
         if subkeys.size!=0:
             data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs)
             if isinstance(subkeys, str): subkeys = [subkeys]
@@ -1048,7 +1065,8 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         subkeys = np.intersect1d(hdunames, keys)
         # EXCLUDE OBJ_IDs from subkeys
         if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-            
+        if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
+           
         if subkeys.size!=0:
                 
             # see if any BLS candidates are in the list
@@ -1077,7 +1095,8 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                 for key in subkeys:
                     # initialize empty dictionary entry, size of all requested ind_objs
                     dic[key] = np.zeros( len(ind_objs) )
-                    
+             
+    
     return dic
 
 
@@ -1100,9 +1119,9 @@ def simplify_dic(dic):
 ###############################################################################
 # Check if all keys are retrieved
 ###############################################################################  
-def check_dic(dic, keys):
+def check_dic(dic, keys, silent):
     
-    print '###############################################################################'
+    if silent==False: print '###############################################################################'
             
     fail = False
     for key in keys:
@@ -1111,9 +1130,9 @@ def check_dic(dic, keys):
             fail = True
     
     if fail == False:
-        print 'Success: All keys successfully read into dictionary.'
+        if silent==False: print 'Success: All keys successfully read into dictionary.'
         
-    print '###############################################################################'
+    if silent==False: print '###############################################################################'
         
         
     return
@@ -1125,7 +1144,6 @@ def check_dic(dic, keys):
 ###############################################################################    
 if __name__ == '__main__':
     pass
-    print get( 'NG0522-2518', ['DATE-OBS','NIGHT'] )
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_id='bls', fitsreader='fitsio', time_hjd=['700','703'])
 #    for key in dic:
 #        print '------------'
