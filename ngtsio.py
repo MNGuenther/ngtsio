@@ -13,7 +13,7 @@ Email: mg719@cam.ac.uk
 
 import astropy.io.fits as pyfits
 import fitsio
-import os, sys, glob, copy, collections, datetime
+import os, sys, glob, collections, datetime
 import numpy as np
 
 
@@ -64,18 +64,18 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=[], silent=False, ngts_version='TEST10'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST10'):
     
     if silent==False: print 'Field name:', fieldname      
 
     #::: filenames
-    if len(fnames)==0: fnames = standard_fnames(fieldname)
+    if fnames is None: fnames = standard_fnames(fieldname, ngts_version)
     
     if check_files(fnames):
         
         #::: objects    
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
-        if silent==False: print 'Object IDs:', obj_ids
+        if silent==False: print 'Object IDs (',len(obj_ids),'):', obj_ids
         
         #::: time
         ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader)
@@ -101,7 +101,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 # Fielnames Formatting
 ###############################################################################
    
-def standard_fnames(fieldname, ngts_version='TEST10'):
+def standard_fnames(fieldname, ngts_version):
     
     #::: on laptop (OS X)
     if sys.platform == "darwin":
@@ -113,7 +113,12 @@ def standard_fnames(fieldname, ngts_version='TEST10'):
     #    import sys
     #    sys.path.append('/home/sw/dev/fitsiochunked')
     #    from fitsiochunked import ChunkedAdapter
-        root = '/ngts/pipeline/output/'+ngts_version+'/'
+        if ngts_version == 'TEST10':
+            root = '/ngts/pipeline/output/'+ngts_version+'/'
+        elif ngts_version == 'TEST13':
+            root = '/home/philipp/TEST13/'
+        else:
+            sys.exit('Invalid value for "ngts_version". Valid entries are e.g. "TEST10" or "TEST13".')
          
     try: 
         fnames = {}   
@@ -164,7 +169,9 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
         inputtype = 'obj_ids'
         
         # b) test if non-empty list
-        if isinstance(obj_ids, (collections.Sequence, np.ndarray)) and not isinstance(obj_ids, (str, unicode)) and len(obj_ids) > 0:
+        if isinstance(obj_ids, (collections.Sequence, np.ndarray)) and not isinstance(obj_ids, (str, unicode)) and len(np.atleast_1d(obj_ids)) > 0:
+            #make sure its not a 0-dimensional ndarray
+            obj_ids = np.atleast_1d(obj_ids)
             # if list of integer or float -> convert to list of str            
             if not isinstance(obj_ids[0], str):
                 obj_ids = map(int, obj_ids)
@@ -394,6 +401,9 @@ def objid_6digit(obj_list):
         while len(obj_id)<6: 
             obj_id = '0'+obj_id
         obj_list[i] = obj_id
+        
+#    formatter = "{:06d}".format
+#    map(formatter, obj_list)
 
     return obj_list
 
@@ -423,7 +433,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
         # B) work with the data
 
         # if not list, make list
-        if not isinstance(time_hjd, (tuple, list, np.ndarray)):
+        if not isinstance(time_index, (tuple, list, np.ndarray)):
             ind_time = [time_index]
         else:
             ind_time = time_index
@@ -1144,7 +1154,7 @@ def check_dic(dic, keys, silent):
 ###############################################################################    
 if __name__ == '__main__':
     pass
-#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_id='bls', fitsreader='fitsio', time_hjd=['700','703'])
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_row=1, fitsreader='fitsio', time_index=range(100000))
 #    for key in dic:
 #        print '------------'
 #        print type(dic[key])
