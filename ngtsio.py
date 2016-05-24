@@ -813,99 +813,102 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
     dic = {}
     
     #, memmap=True, do_not_scale_image_data=True
-    with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-        
-        #::: CATALOGUE
-        hdukey = 'CATALOGUE'
-        hdu = hdulist[hdukey].data
-        for key in np.intersect1d(hdu.names, keys):
-            dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
-        del hdu, hdulist[hdukey].data
+    if fnames['nights'] is not None:
+        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
             
-        #::: IMAGELIST
-        hdukey = 'IMAGELIST'
-        hdu = hdulist[hdukey].data
-        for key in np.intersect1d(hdu.names, keys):
-            dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
-        del hdu, hdulist[hdukey].data
-        
-        #::: DATA HDUs
-        for _, hdukeyinfo in enumerate(hdulist.info(output=False)):
-            hdukey = hdukeyinfo[1]
-            if hdukey in keys:
-                key = hdukey
-                dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
-                if key in ['CCDX','CCDY']:
-                    dic[key] = (dic[key] + CCD_bzero) / CCD_precision
-                if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
-                    dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
-                del hdulist[key].data
-        
-        del hdulist
-            
-
-
-    with pyfits.open(fnames['sysrem'], mode='denywrite') as hdulist_sysrem:
-        for i, hdukey in enumerate(hdulist_sysrem.info(output=False)):
-            if hdukey[1] in keys:
-                key = hdukey[1]
-                dic[key] = hdulist_sysrem[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist_sysrem[key].data[ind_objs][:,ind_time] )#in s
-                del hdulist_sysrem[key].data
-                
-        del hdulist_sysrem
-    
-    
-    
-    with pyfits.open(fnames['bls'], mode='denywrite') as hdulist_bls:
-        
-        #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
-        #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
-        ind_objs_bls = np.in1d(hdulist_bls['CANDIDATES'].data['OBJ_ID'].strip(), obj_ids).nonzero()[0] #indices of the candidates
-        ind_rank1 = np.where( hdulist_bls['CANDIDATES'].data['RANK'] == 1 )[0]
-        ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
-        
-        
-        #::: CATALOGUE
-        hdukey = 'CATALOGUE'
-        hdu = hdulist_bls[hdukey].data
-        for key in np.intersect1d(hdu.names, keys):
-            if key!='OBJ_ID':
+            #::: CATALOGUE
+            hdukey = 'CATALOGUE'
+            hdu = hdulist[hdukey].data
+            for key in np.intersect1d(hdu.names, keys):
                 dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
-        del hdu, hdulist_bls[hdukey].data
-        
-
-        #::: CANDIDATES (different indices!)
-        hdukey = 'CANDIDATES'    
-        hdu = hdulist_bls[hdukey].data
-        subkeys = np.intersect1d(hdu.names, keys)
-        N_objs = len(dic['OBJ_ID'])
-        # EXCLUDE OBJ_IDs from subkeys
-        if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-        if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
-            
-        if subkeys.size!=0:            
-            # see if any BLS candidates are in the list
-            if len(ind_objs_bls)!=0:
-                bls_data_objid = np.char.strip( hdu['OBJ_ID'][ind_objs_bls] )
+            del hdu, hdulist[hdukey].data
                 
-                # go through all subkeys
-                for key in subkeys:
-                    # read out data for this key
-                    bls_data = hdu[key][ind_objs_bls]
+            #::: IMAGELIST
+            hdukey = 'IMAGELIST'
+            hdu = hdulist[hdukey].data
+            for key in np.intersect1d(hdu.names, keys):
+                dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
+            del hdu, hdulist[hdukey].data
+            
+            #::: DATA HDUs
+            for _, hdukeyinfo in enumerate(hdulist.info(output=False)):
+                hdukey = hdukeyinfo[1]
+                if hdukey in keys:
+                    key = hdukey
+                    dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
+                    if key in ['CCDX','CCDY']:
+                        dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                    if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                        dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                    del hdulist[key].data
+            
+            del hdulist
+            
+            
+
+    if fnames['sysrem'] is not None:
+        with pyfits.open(fnames['sysrem'], mode='denywrite') as hdulist_sysrem:
+            for i, hdukey in enumerate(hdulist_sysrem.info(output=False)):
+                if hdukey[1] in keys:
+                    key = hdukey[1]
+                    dic[key] = hdulist_sysrem[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist_sysrem[key].data[ind_objs][:,ind_time] )#in s
+                    del hdulist_sysrem[key].data
                     
-                    # write them at the right place into the dictionary
-                    # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( N_objs ) * np.nan
-                    # go through all requested obj_ids
-                    for i, singleobj_id in enumerate(obj_ids):
-                        if singleobj_id in bls_data_objid:
-                            i_bls = np.where( bls_data_objid == singleobj_id )[0]
-                            dic[key][i] = bls_data[i_bls]
-            else:
-                # go through all subkeys
-                for key in subkeys:
-                    # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( N_objs )
+            del hdulist_sysrem
+    
+    
+    
+    if fnames['bls'] is not None:
+        with pyfits.open(fnames['bls'], mode='denywrite') as hdulist_bls:
+            
+            #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
+            #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
+            ind_objs_bls = np.in1d(hdulist_bls['CANDIDATES'].data['OBJ_ID'].strip(), obj_ids).nonzero()[0] #indices of the candidates
+            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].data['RANK'] == 1 )[0]
+            ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
+            
+            
+            #::: CATALOGUE
+            hdukey = 'CATALOGUE'
+            hdu = hdulist_bls[hdukey].data
+            for key in np.intersect1d(hdu.names, keys):
+                if key!='OBJ_ID':
+                    dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
+            del hdu, hdulist_bls[hdukey].data
+            
+    
+            #::: CANDIDATES (different indices!)
+            hdukey = 'CANDIDATES'    
+            hdu = hdulist_bls[hdukey].data
+            subkeys = np.intersect1d(hdu.names, keys)
+            N_objs = len(dic['OBJ_ID'])
+            # EXCLUDE OBJ_IDs from subkeys
+            if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+            if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
+                
+            if subkeys.size!=0:            
+                # see if any BLS candidates are in the list
+                if len(ind_objs_bls)!=0:
+                    bls_data_objid = np.char.strip( hdu['OBJ_ID'][ind_objs_bls] )
+                    
+                    # go through all subkeys
+                    for key in subkeys:
+                        # read out data for this key
+                        bls_data = hdu[key][ind_objs_bls]
+                        
+                        # write them at the right place into the dictionary
+                        # initialize empty dictionary entry, size of all requested ind_objs
+                        dic[key] = np.zeros( N_objs ) * np.nan
+                        # go through all requested obj_ids
+                        for i, singleobj_id in enumerate(obj_ids):
+                            if singleobj_id in bls_data_objid:
+                                i_bls = np.where( bls_data_objid == singleobj_id )[0]
+                                dic[key][i] = bls_data[i_bls]
+                else:
+                    # go through all subkeys
+                    for key in subkeys:
+                        # initialize empty dictionary entry, size of all requested ind_objs
+                        dic[key] = np.zeros( N_objs )
      
 
 
@@ -929,182 +932,182 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
         
         
     ##################### fnames['nights'] #####################
-    
-    with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
-        
-        #::: fitsio does not work with slice arguments, convert to list
-        allobjects = False
-        if isinstance (ind_objs, slice):
-            N_objs = int( hdulist['CATALOGUE'].get_nrows() )
-            ind_objs = range(N_objs)
-            allobjects = True
+    if fnames['nights'] is not None:
+        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
             
-        if isinstance (ind_time, slice):
-            N_time = int( hdulist['IMAGELIST'].get_nrows() )
-            ind_time = range(N_time)
+            #::: fitsio does not work with slice arguments, convert to list
+            allobjects = False
+            if isinstance (ind_objs, slice):
+                N_objs = int( hdulist['CATALOGUE'].get_nrows() )
+                ind_objs = range(N_objs)
+                allobjects = True
+                
+            if isinstance (ind_time, slice):
+                N_time = int( hdulist['IMAGELIST'].get_nrows() )
+                ind_time = range(N_time)
+                
+                
+            #::: CATALOGUE
+            hdukey = 'CATALOGUE'
+            hdunames = hdulist[hdukey].get_colnames()
+            subkeys = np.intersect1d(hdunames, keys)
+            if subkeys.size!=0:
+                data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
+                if isinstance(subkeys, str): subkeys = [subkeys]
+                for key in subkeys:
+                    dic[key] = data[key] #copy.deepcopy( data[key] )
+                del data
             
-            
-        #::: CATALOGUE
-        hdukey = 'CATALOGUE'
-        hdunames = hdulist[hdukey].get_colnames()
-        subkeys = np.intersect1d(hdunames, keys)
-        if subkeys.size!=0:
-            data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
-            if isinstance(subkeys, str): subkeys = [subkeys]
-            for key in subkeys:
-                dic[key] = data[key] #copy.deepcopy( data[key] )
-            del data
-        
-        #::: IMAGELIST
-        hdukey = 'IMAGELIST'
-        hdunames = hdulist[hdukey].get_colnames()
-        subkeys = np.intersect1d(hdunames, keys)
-        if subkeys.size!=0:
-            data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
-            if isinstance(subkeys, str): subkeys = [subkeys]
-            for key in subkeys:
-                dic[key] = data[key] #copy.deepcopy( data[key] )
-            del data
-            
-        # TODO: very inefficient - reads out entire image first, then cuts
-        # TODO: can only give ind_time in a slice, not just respective dates
-        #::: DATA HDUs
-        j = 0
-        while j!=-1:
-            try:
-                hdukey = hdulist[j].get_extname()
-                if hdukey in keys:
-                    key = hdukey
-                    
-                    #::: read out individual objects (more memory efficient)
-                    if allobjects == False:
-                        dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
-                        for i, ind_singleobj in enumerate(ind_objs):
-                            buf = hdulist[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
-                            #::: select the wished times only (if some times within the slice are not wished for)
+            #::: IMAGELIST
+            hdukey = 'IMAGELIST'
+            hdunames = hdulist[hdukey].get_colnames()
+            subkeys = np.intersect1d(hdunames, keys)
+            if subkeys.size!=0:
+                data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
+                if isinstance(subkeys, str): subkeys = [subkeys]
+                for key in subkeys:
+                    dic[key] = data[key] #copy.deepcopy( data[key] )
+                del data
+                
+            # TODO: very inefficient - reads out entire image first, then cuts
+            # TODO: can only give ind_time in a slice, not just respective dates
+            #::: DATA HDUs
+            j = 0
+            while j!=-1:
+                try:
+                    hdukey = hdulist[j].get_extname()
+                    if hdukey in keys:
+                        key = hdukey
+                        
+                        #::: read out individual objects (more memory efficient)
+                        if allobjects == False:
+                            dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
+                            for i, ind_singleobj in enumerate(ind_objs):
+                                buf = hdulist[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
+                                #::: select the wished times only (if some times within the slice are not wished for)
+                                if buf.shape[1] != len(ind_time):
+                                    ind_timeX = [x - ind_time[0] for x in ind_time]
+                                    buf = buf[:,ind_timeX]
+                                dic[key][i,:] = buf
+                            del buf
+                            
+                        #::: read out all objects at once
+                        else:
+                            buf = hdulist[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
                             if buf.shape[1] != len(ind_time):
                                 ind_timeX = [x - ind_time[0] for x in ind_time]
                                 buf = buf[:,ind_timeX]
-                            dic[key][i,:] = buf
-                        del buf
-                        
-                    #::: read out all objects at once
-                    else:
-                        buf = hdulist[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
-                        if buf.shape[1] != len(ind_time):
-                            ind_timeX = [x - ind_time[0] for x in ind_time]
-                            buf = buf[:,ind_timeX]
-                        dic[key] = buf
-                        del buf                        
-                        
-                    if key in ['CCDX','CCDY']:
-                        dic[key] = (dic[key] + CCD_bzero) / CCD_precision
-                    if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
-                        dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
-                j += 1
-            except:
-                break
-                
+                            dic[key] = buf
+                            del buf                        
+                            
+                        if key in ['CCDX','CCDY']:
+                            dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                        if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                            dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                    j += 1
+                except:
+                    break
+                    
             
             
     ##################### fnames['sysrem'] #####################
-                
-    with fitsio.FITS(fnames['sysrem'], vstorage='object') as hdulist_sysrem:
-        j = 0
-        while j!=-1:
-            try:
-                hdukey = hdulist_sysrem[j].get_extname()
-                if hdukey in keys:
-                    key = hdukey
-                    
-                    #::: read out individual objects (more memory efficient)
-                    if allobjects == False:
-                        dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
-                        for i, ind_singleobj in enumerate(ind_objs):
-                            buf = hdulist_sysrem[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
-                            #::: select the wished times only (if some times within the slice are not wished for)
+    if fnames['sysrem'] is not None:               
+        with fitsio.FITS(fnames['sysrem'], vstorage='object') as hdulist_sysrem:
+            j = 0
+            while j!=-1:
+                try:
+                    hdukey = hdulist_sysrem[j].get_extname()
+                    if hdukey in keys:
+                        key = hdukey
+                        
+                        #::: read out individual objects (more memory efficient)
+                        if allobjects == False:
+                            dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
+                            for i, ind_singleobj in enumerate(ind_objs):
+                                buf = hdulist_sysrem[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
+                                #::: select the wished times only (if some times within the slice are not wished for)
+                                if buf.shape[1] != len(ind_time):
+                                    ind_timeX = [x - ind_time[0] for x in ind_time]
+                                    buf = buf[:,ind_timeX]
+                                dic[key][i,:] = buf
+                            del buf
+                            
+                        #::: read out all objects at once
+                        else:
+                            buf = hdulist_sysrem[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
                             if buf.shape[1] != len(ind_time):
                                 ind_timeX = [x - ind_time[0] for x in ind_time]
                                 buf = buf[:,ind_timeX]
-                            dic[key][i,:] = buf
-                        del buf
-                        
-                    #::: read out all objects at once
-                    else:
-                        buf = hdulist_sysrem[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
-                        if buf.shape[1] != len(ind_time):
-                            ind_timeX = [x - ind_time[0] for x in ind_time]
-                            buf = buf[:,ind_timeX]
-                        dic[key] = buf
-                        del buf
-                j += 1
-            except:
-                break
+                            dic[key] = buf
+                            del buf
+                    j += 1
+                except:
+                    break
             
             
             
     ##################### fnames['bls'] #####################
-                        
-    with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
-        
-        #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
-        #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
-        ind_objs_bls = np.in1d( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')), obj_ids).nonzero()[0] #indices of the candidates
-        ind_rank1 = np.where( hdulist_bls['CANDIDATES'].read(columns='RANK') == 1 )[0]
-        ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
-        
-        
-        #::: CATALOGUE
-        hdukey = 'CATALOGUE'
-        hdunames = hdulist_bls[hdukey].get_colnames()
-        subkeys = np.intersect1d(hdunames, keys)
-        # EXCLUDE OBJ_IDs from subkeys
-        if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+    if fnames['bls'] is not None:                    
+        with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
             
-        if subkeys.size!=0:
-            data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs)
-            if isinstance(subkeys, str): subkeys = [subkeys]
-            for key in subkeys:
-                dic[key] = data[key] #copy.deepcopy( data[key] )
-            del data
-        
-        
-        #::: CANDIDATES (different indices!)
-        hdukey = 'CANDIDATES'        
-        hdunames = hdulist_bls[hdukey].get_colnames()
-        subkeys = np.intersect1d(hdunames, keys)
-        # EXCLUDE OBJ_IDs from subkeys
-        if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-        if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
-           
-        if subkeys.size!=0:
+            #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
+            #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
+            ind_objs_bls = np.in1d( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')), obj_ids).nonzero()[0] #indices of the candidates
+            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].read(columns='RANK') == 1 )[0]
+            ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
+            
+            
+            #::: CATALOGUE
+            hdukey = 'CATALOGUE'
+            hdunames = hdulist_bls[hdukey].get_colnames()
+            subkeys = np.intersect1d(hdunames, keys)
+            # EXCLUDE OBJ_IDs from subkeys
+            if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
                 
-            # see if any BLS candidates are in the list
-            if len(ind_objs_bls)!=0:
-                
-                # Now, for this one, again INCLUDE OBJ_IDs in subkeys (as last subkey)
-                if 'OBJ_ID' not in subkeys: subkeys = np.append(subkeys, 'OBJ_ID')
-                
-                bls_data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs_bls)
-            # write them at the right place into the dictionary
-                # EXCLUDE OBJ_IDs from subkeys
-                if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-                #typecast to list if needed
+            if subkeys.size!=0:
+                data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs)
                 if isinstance(subkeys, str): subkeys = [subkeys]
-                # go through all subkeys
                 for key in subkeys:
-                    # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( len(ind_objs) )
-                    # go through all requested obj_ids
-                    for i, singleobj_id in enumerate(obj_ids):
-                        if singleobj_id in np.char.strip(bls_data['OBJ_ID']):
-                            i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
-                            dic[key][i] = bls_data[key][i_bls]
-            else:
-                # go through all subkeys
-                for key in subkeys:
-                    # initialize empty dictionary entry, size of all requested ind_objs
-                    dic[key] = np.zeros( len(ind_objs) )
+                    dic[key] = data[key] #copy.deepcopy( data[key] )
+                del data
+            
+            
+            #::: CANDIDATES (different indices!)
+            hdukey = 'CANDIDATES'        
+            hdunames = hdulist_bls[hdukey].get_colnames()
+            subkeys = np.intersect1d(hdunames, keys)
+            # EXCLUDE OBJ_IDs from subkeys
+            if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+            if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
+               
+            if subkeys.size!=0:
+                    
+                # see if any BLS candidates are in the list
+                if len(ind_objs_bls)!=0:
+                    
+                    # Now, for this one, again INCLUDE OBJ_IDs in subkeys (as last subkey)
+                    if 'OBJ_ID' not in subkeys: subkeys = np.append(subkeys, 'OBJ_ID')
+                    
+                    bls_data = hdulist_bls[hdukey].read(columns=subkeys, rows=ind_objs_bls)
+                # write them at the right place into the dictionary
+                    # EXCLUDE OBJ_IDs from subkeys
+                    if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+                    #typecast to list if needed
+                    if isinstance(subkeys, str): subkeys = [subkeys]
+                    # go through all subkeys
+                    for key in subkeys:
+                        # initialize empty dictionary entry, size of all requested ind_objs
+                        dic[key] = np.zeros( len(ind_objs) )
+                        # go through all requested obj_ids
+                        for i, singleobj_id in enumerate(obj_ids):
+                            if singleobj_id in np.char.strip(bls_data['OBJ_ID']):
+                                i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
+                                dic[key][i] = bls_data[key][i_bls]
+                else:
+                    # go through all subkeys
+                    for key in subkeys:
+                        # initialize empty dictionary entry, size of all requested ind_objs
+                        dic[key] = np.zeros( len(ind_objs) )
              
     
     return dic
