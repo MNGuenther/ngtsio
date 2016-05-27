@@ -64,7 +64,7 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST10'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST16'):
     
     if silent==False: print 'Field name:', fieldname      
 
