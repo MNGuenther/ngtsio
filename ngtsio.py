@@ -404,7 +404,8 @@ def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
             else: 
                 print 'here comes the error (caused by numpy/fitsio)'
                 obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-
+                print 'it worked'
+                
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
                                
     obj_ids = objid_6digit(obj_ids)
