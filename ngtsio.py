@@ -125,19 +125,19 @@ def standard_fnames(fieldname, ngts_version):
         fnames['nights'] = glob.glob(root + fieldname+'*.fits')[0]
     except:
         fnames['nights'] = None
-        print '>>> '+fieldname+': Fits files "nights" do not exist.'
+        print 'Warning: '+fieldname+': Fits files "nights" do not exist.'
     
     try:    
         fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
     except:
         fnames['sysrem'] = None
-        print '>>> '+fieldname+': Fits files "sysrem" do not exist.'
+        print 'Warning: '+fieldname+': Fits files "sysrem" do not exist.'
         
     try:
         fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
     except:
         fnames['bls'] = None
-        print '>>> '+fieldname+': Fits files "bls" do not exist.'
+        print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
 
     return fnames
    
