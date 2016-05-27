@@ -303,6 +303,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
+            print ind_objs
+            print 'happy world'
             obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
 
         
@@ -398,8 +400,10 @@ def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
         
     elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
         with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
-            if isinstance(ind_objs, slice):  obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-            else:  obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+            if isinstance(ind_objs, slice): obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
+            else: 
+                print 'here comes the error (caused by numpy/fitsio)'
+                obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
                                
@@ -1170,8 +1174,8 @@ def check_dic(dic, keys, silent):
 # MAIN
 ###############################################################################    
 if __name__ == '__main__':
-    pass
-#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_row=1, fitsreader='fitsio', time_index=range(100000))
+#    pass
+    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_row=1) #, fitsreader='fitsio', time_index=range(100000))
 #    for key in dic:
 #        print '------------'
 #        print type(dic[key])
