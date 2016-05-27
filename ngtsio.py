@@ -119,15 +119,25 @@ def standard_fnames(fieldname, ngts_version):
             root = '/home/philipp/TEST13/'
         else:
             sys.exit('Invalid value for "ngts_version". Valid entries are e.g. "TEST10" or "TEST13".')
-         
-    try: 
-        fnames = {}   
+                  
+    fnames = {} 
+    try:   
         fnames['nights'] = glob.glob(root + fieldname+'*.fits')[0]
+    except:
+        fnames['nights'] = None
+        print '>>> '+fieldname+': Fits files "nights" do not exist.'
+    
+    try:    
         fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
+    except:
+        fnames['sysrem'] = None
+        print '>>> '+fieldname+': Fits files "sysrem" do not exist.'
+        
+    try:
         fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
     except:
-        fnames = None
-        print '>>> '+fieldname+': Fits files do not exist.'
+        fnames['bls'] = None
+        print '>>> '+fieldname+': Fits files "bls" do not exist.'
 
     return fnames
    
