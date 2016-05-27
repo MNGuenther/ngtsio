@@ -113,7 +113,7 @@ def standard_fnames(fieldname, ngts_version):
     #    import sys
     #    sys.path.append('/home/sw/dev/fitsiochunked')
     #    from fitsiochunked import ChunkedAdapter
-        if ngts_version == 'TEST10':
+        if ngts_version == 'TEST10' or 'TEST16':
             root = '/ngts/pipeline/output/'+ngts_version+'/'
         elif ngts_version == 'TEST13':
             root = '/home/philipp/TEST13/'
