@@ -106,7 +106,8 @@ def standard_fnames(fieldname, ngts_version):
     #::: on laptop (OS X)
     if sys.platform == "darwin":
     #    from fitsiochunked import ChunkedAdapter
-        root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+        if ngts_version == 'TEST10' or 'TEST16':
+            root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
     
     #::: on ngtshead (LINUX)
     elif sys.platform == "linux" or sys.platform == "linux2":
@@ -115,8 +116,8 @@ def standard_fnames(fieldname, ngts_version):
     #    from fitsiochunked import ChunkedAdapter
         if ngts_version == 'TEST10' or 'TEST16':
             root = '/ngts/pipeline/output/'+ngts_version+'/'
-        elif ngts_version == 'TEST13':
-            root = '/home/philipp/TEST13/'
+#        elif ngts_version == 'TEST13':
+#            root = '/home/philipp/TEST13/'
         else:
             sys.exit('Invalid value for "ngts_version". Valid entries are e.g. "TEST10" or "TEST13".')
                   
@@ -139,6 +140,9 @@ def standard_fnames(fieldname, ngts_version):
         fnames['bls'] = None
         print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
 
+    if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
+        sys.exit('None of the given fits files exist.')
+
     return fnames
    
  
@@ -149,7 +153,7 @@ def check_files(fnames):
         for i,fnames_key in enumerate(['nights','sysrem','bls']):
             if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
                 fnames[fnames_key] = None
-                print "Warning: fname['" + fnames_key + "']:" + fnames[fnames_key] + "not found. Set to 'None'."
+                print "Warning: fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'."
         return True
     else:
         return False         
@@ -303,8 +307,6 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             if (indexing=='fits'):
                 ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
-            print ind_objs
-            print 'happy world'
             obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
 
         
@@ -401,10 +403,7 @@ def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
     elif fitsreader=='fitsio' or fitsreader=='cfitsio': 
         with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
             if isinstance(ind_objs, slice): obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-            else: 
-                print 'here comes the error (caused by numpy/fitsio)'
-                obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
-                print 'it worked'
+            else: obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
                 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
                                
