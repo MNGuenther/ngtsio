@@ -11,7 +11,7 @@ This readme contains:
 ---
 ## Docs
 
-    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST10', fitsreader='pyfits'):
+    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST16', fitsreader='pyfits'):
 
 Return a dictionary with all requested data for an NGTS field.
 
@@ -63,6 +63,10 @@ The newest stable release can be found here:  https://github.com/MNGuenther/ngts
         print dic[key]
         print '------------'
 
+#### e) Compare two objects between TEST10 and TEST16
+
+    dic16 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112) #TEST16 is standard
+    dic10 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112, ngts_version='TEST10')
 
 
 ---
