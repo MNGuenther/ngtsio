@@ -85,6 +85,9 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         
         #::: simplify output if only for 1 object
         if simplify==True: dic = simplify_dic(dic)
+        
+        #::: add fieldname
+        dic['FIELDNAME'] = fieldname
             
         #::: check if all keys were retrieved
         check_dic(dic, keys, silent)
@@ -647,8 +650,8 @@ def get_indtime_from_timehjd(fnames, time_hjd, fitsreader):
     #::: check if all dates were found in fits file        
     for hjd in time_hjd:
         if hjd not in time_hjd_all[ind_time]:
-            warning = 'Date-HJD '+ hjd +' not found in fits file.'
-            sys.exit(warning)
+            warning = 'Date-HJD '+ str(hjd) +' not found in fits file.'
+            print warning
    
     #::: clean up      
     del time_hjd_all   
