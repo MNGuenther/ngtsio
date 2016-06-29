@@ -152,12 +152,16 @@ def standard_fnames(fieldname, ngts_version):
 
 def check_files(fnames):
     
-    if fnames is not None:
+    if fnames['nights'] is None:
+        return False
+        
+    elif fnames is not None:
         for i,fnames_key in enumerate(['nights','sysrem','bls']):
             if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
                 fnames[fnames_key] = None
                 print "Warning: fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'."
         return True
+        
     else:
         return False         
  
