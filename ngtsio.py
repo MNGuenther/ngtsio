@@ -144,7 +144,7 @@ def standard_fnames(fieldname, ngts_version):
         print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
 
     if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
-        sys.exit('None of the given fits files exist.')
+        print 'Warning: None of the given fits files exist.'
 
     return fnames
    
