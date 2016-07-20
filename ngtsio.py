@@ -64,7 +64,7 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST16'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST16A'):
     
     if silent==False: print 'Field name:', fieldname      
 
@@ -109,7 +109,7 @@ def standard_fnames(fieldname, ngts_version):
     #::: on laptop (OS X)
     if sys.platform == "darwin":
     #    from fitsiochunked import ChunkedAdapter
-        if ngts_version == 'TEST10' or 'TEST16':
+        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
             root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
     
     #::: on ngtshead (LINUX)
@@ -117,12 +117,12 @@ def standard_fnames(fieldname, ngts_version):
     #    import sys
     #    sys.path.append('/home/sw/dev/fitsiochunked')
     #    from fitsiochunked import ChunkedAdapter
-        if ngts_version == 'TEST10' or 'TEST16':
+        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
             root = '/ngts/pipeline/output/'+ngts_version+'/'
 #        elif ngts_version == 'TEST13':
 #            root = '/home/philipp/TEST13/'
         else:
-            sys.exit('Invalid value for "ngts_version". Valid entries are e.g. "TEST10" or "TEST13".')
+            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
                   
     fnames = {} 
     try:   
