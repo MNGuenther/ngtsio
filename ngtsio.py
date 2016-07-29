@@ -91,6 +91,11 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
             
         #::: check if all keys were retrieved
         check_dic(dic, keys, silent)
+        
+        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
+        if ngts_version=='TEST16A':
+            if 'SYSREM_FLUX3' in keys:
+                dic['SYSREM_FLUX3'] = dic['FLUX']
     
         return dic
         
@@ -140,11 +145,12 @@ def standard_fnames(fieldname, ngts_version):
         fnames['nights'] = None
         print 'Warning: '+fieldname+': Fits files "nights" do not exist.'
     
-    try:    
-        fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
-    except:
-        fnames['sysrem'] = None
-        print 'Warning: '+fieldname+': Fits files "sysrem" do not exist.'
+    if ngts_version == 'TEST10' or 'TEST16': #TEST16A contains the sysrem files as normal flux
+        try:    
+            fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
+        except:
+            fnames['sysrem'] = None
+            print 'Warning: '+fieldname+': Fits files "sysrem" do not exist.'
         
     try:
         fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
