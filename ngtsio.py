@@ -13,7 +13,7 @@ Email: mg719@cam.ac.uk
 
 import astropy.io.fits as pyfits
 import fitsio
-import os, sys, glob, collections, datetime
+import os, sys, glob, socket, collections, datetime
 import numpy as np
 
 
@@ -111,9 +111,18 @@ def standard_fnames(fieldname, ngts_version):
     #    from fitsiochunked import ChunkedAdapter
         if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
             root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
-    
+        else:
+            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+            
+    #::: on Cambridge servers
+    elif 'ra.phy.cam.ac.uk' in socket.gethostname():
+        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+            root = '/appch/data/mg719/ngts_pipeline_output/'+ngts_version+'/'
+        else:
+            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+        
     #::: on ngtshead (LINUX)
-    elif sys.platform == "linux" or sys.platform == "linux2":
+    elif 'ngts' in socket.gethostname(): #elif sys.platform == "linux" or sys.platform == "linux2":
     #    import sys
     #    sys.path.append('/home/sw/dev/fitsiochunked')
     #    from fitsiochunked import ChunkedAdapter
