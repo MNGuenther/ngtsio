@@ -73,6 +73,11 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     
     if check_files(fnames):
         
+        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
+        if ngts_version=='TEST16A':
+            if ('SYSREM_FLUX3' in keys) and ('FLUX' not in keys):
+                keys.append('FLUX')   
+                
         #::: objects    
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
         if silent==False: print 'Object IDs (',len(obj_ids),'):', obj_ids
@@ -88,14 +93,15 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         
         #::: add fieldname
         dic['FIELDNAME'] = fieldname
-            
-        #::: check if all keys were retrieved
-        check_dic(dic, keys, silent)
         
         #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
         if ngts_version=='TEST16A':
             if 'SYSREM_FLUX3' in keys:
                 dic['SYSREM_FLUX3'] = dic['FLUX']
+            
+        #::: check if all keys were retrieved
+        check_dic(dic, keys, silent)
+        
     
         return dic
         
@@ -145,12 +151,14 @@ def standard_fnames(fieldname, ngts_version):
         fnames['nights'] = None
         print 'Warning: '+fieldname+': Fits files "nights" do not exist.'
     
-    if ngts_version == 'TEST10' or 'TEST16': #TEST16A contains the sysrem files as normal flux
+    if (ngts_version=='TEST10') or (ngts_version=='TEST16'): #TEST16A contains the sysrem files as normal flux
         try:    
             fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
         except:
             fnames['sysrem'] = None
             print 'Warning: '+fieldname+': Fits files "sysrem" do not exist.'
+    else:
+        fnames['sysrem'] = None
         
     try:
         fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
@@ -1177,6 +1185,7 @@ def check_dic(dic, keys, silent):
     if silent==False: print '###############################################################################'
             
     fail = False
+    
     for key in keys:
         if key not in dic:
             print 'Failure: key',key,'not read into dictionary.'
