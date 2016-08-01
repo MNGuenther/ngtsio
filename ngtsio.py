@@ -64,12 +64,12 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, silent=False, ngts_version='TEST16A'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, silent=False, ngts_version='TEST16A'):
     
     if silent==False: print 'Field name:', fieldname      
 
     #::: filenames
-    if fnames is None: fnames = standard_fnames(fieldname, ngts_version)
+    if fnames is None: fnames = standard_fnames(fieldname, ngts_version, root)
     
     if check_files(fnames):
         
@@ -97,7 +97,8 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
         if ngts_version=='TEST16A':
             if 'SYSREM_FLUX3' in keys:
-                dic['SYSREM_FLUX3'] = dic['FLUX']
+                if 'FLUX' in dic.keys():
+                    dic['SYSREM_FLUX3'] = dic['FLUX']
             
         #::: check if all keys were retrieved
         check_dic(dic, keys, silent)
@@ -115,35 +116,42 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 # Fielnames Formatting
 ###############################################################################
    
-def standard_fnames(fieldname, ngts_version):
+def standard_fnames(fieldname, ngts_version, root):
     
-    #::: on laptop (OS X)
-    if sys.platform == "darwin":
-    #    from fitsiochunked import ChunkedAdapter
-        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-            root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
-        else:
-            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
-            
-    #::: on Cambridge servers
-    elif 'ra.phy.cam.ac.uk' in socket.gethostname():
-        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-            root = '/appch/data/mg719/ngts_pipeline_output/'+ngts_version+'/'
-        else:
-            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+    if root is None:
         
-    #::: on ngtshead (LINUX)
-    elif 'ngts' in socket.gethostname(): #elif sys.platform == "linux" or sys.platform == "linux2":
-    #    import sys
-    #    sys.path.append('/home/sw/dev/fitsiochunked')
-    #    from fitsiochunked import ChunkedAdapter
-        if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-            root = '/ngts/pipeline/output/'+ngts_version+'/'
-#        elif ngts_version == 'TEST13':
-#            root = '/home/philipp/TEST13/'
-        else:
-            sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+        #::: on laptop (OS X)
+        if sys.platform == "darwin":
+        #    from fitsiochunked import ChunkedAdapter
+            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+                root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
+            else:
+                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+                
+        #::: on Cambridge servers
+        elif 'ra.phy.cam.ac.uk' in socket.gethostname():
+            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+                root = '/appch/data/mg719/ngts_pipeline_output/'+ngts_version+'/'
+            else:
+                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+            
+        #::: on ngtshead (LINUX)
+        elif 'ngts' in socket.gethostname(): #elif sys.platform == "linux" or sys.platform == "linux2":
+        #    import sys
+        #    sys.path.append('/home/sw/dev/fitsiochunked')
+        #    from fitsiochunked import ChunkedAdapter
+            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+                root = '/ngts/pipeline/output/'+ngts_version+'/'
+    #        elif ngts_version == 'TEST13':
+    #            root = '/home/philipp/TEST13/'
+            else:
+                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
                   
+    else:
+        if ( root[-1] != '/' ):
+            root += '/'   
+        root += ngts_version+'/'
+            
     fnames = {} 
     try:   
         fnames['nights'] = glob.glob(root + fieldname+'*.fits')[0]
@@ -1206,7 +1214,7 @@ def check_dic(dic, keys, silent):
 ###############################################################################    
 if __name__ == '__main__':
 #    pass
-    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], obj_row=1) #, fitsreader='fitsio', time_index=range(100000))
+    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], root='/Users/mx/Big_Data/BIG_DATA_NGTS/2016/', obj_row=1) #, fitsreader='fitsio', time_index=range(100000))
 #    for key in dic:
 #        print '------------'
 #        print type(dic[key])
