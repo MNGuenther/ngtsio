@@ -64,7 +64,7 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, silent=False, ngts_version='TEST16A'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, silent=False, ngts_version='TEST16A'):
     
     if silent==False: print 'Field name:', fieldname      
 
@@ -173,6 +173,12 @@ def standard_fnames(fieldname, ngts_version, root):
     except:
         fnames['bls'] = None
         print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
+        
+    try:
+        fnames['canvas'] = glob.glob(root + 'canvas/' + '*' + fieldname + '*final_selection*')[0]
+    except:
+        fnames['canvas'] = None
+        print 'Warning: '+fieldname+': Txt files "canvas" do not exist.'
 
     if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
         print 'Warning: None of the given fits files exist.'
@@ -187,7 +193,7 @@ def check_files(fnames):
         return False
         
     elif fnames is not None:
-        for i,fnames_key in enumerate(['nights','sysrem','bls']):
+        for i,fnames_key in enumerate(['nights','sysrem','bls','canvas']):
             if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
                 fnames[fnames_key] = None
                 print "Warning: fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'."
@@ -258,14 +264,14 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
         elif isinstance(obj_ids, str) and not os.path.isfile(obj_ids):
             
             # d1) a single value given as a string
-            if obj_ids != 'bls':
+            if (obj_ids != 'bls') and (obj_ids != 'canvas'):
                 # cast to list
                 obj_ids = [obj_ids]
                 # give all strings 6 digits
                 obj_ids = objid_6digit(obj_ids)
             
             #d2) the command 'bls' which reads out all 'bls' candidates
-            else:               
+            elif obj_ids == 'bls':               
                 if fitsreader=='astropy' or fitsreader=='pyfits':
                     with pyfits.open(fnames['bls'], mode='denywrite') as hdulist:
                         obj_ids = np.unique( hdulist['CANDIDATES'].data['OBJ_ID'].strip() )
@@ -276,6 +282,13 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
                         obj_ids = np.unique( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')) )
 
                 else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
+                
+            #d3) the command 'canvas' which reads out all 'canvas' candidates
+            elif obj_ids == 'canvas':   
+                canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
+                obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )                
+            else: 
+                sys.exit('Error: invalid input for "obj_id".') 
 
             # connect obj_ids to ind_objs
             ind_objs, obj_ids = get_indobjs_from_objids(fnames, obj_ids, fitsreader)          
@@ -835,6 +848,9 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
         elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
         else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
         
+        dic = get_canvas_data( fnames, keys, dic )                        
+                        
+                        
         #TODO: make clear that from now on OBJ_IDs is always part of the dictionary!
         # in case OBJ_IDs was not part of the keys, remove it again
 #        if dont_save_obj_id == True:
@@ -1170,6 +1186,33 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
 
 
 
+
+###############################################################################
+# Simplify output if only one object is retrieved
+############################################################################### 
+def get_canvas_data( fnames, keys, dic ):
+    if fnames['canvas'] is not None:  
+        #::: load canvasdata
+        canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
+        canvas_obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )
+        #::: cycle through all canvaskeys
+        for canvaskey in canvasdata.dtype.names:
+            #::: if canvaskey is requested
+            if ('CANVAS_' + canvaskey) in keys:
+                #::: initialize dic nan-array
+                dic[ 'CANVAS_' + canvaskey ] = np.zeros( len(dic['OBJ_ID']) ) * np.nan
+                #::: crossmatch objects
+                for i, obj_id in enumerate( dic['OBJ_ID'] ):
+                    if obj_id in canvas_obj_ids:
+                        dic[ 'CANVAS_' + canvaskey ][i] = canvasdata[canvaskey][ canvas_obj_ids == obj_id ]
+            
+                if ('CANVAS_' + canvaskey) in ['CANVAS_PERIOD', 'CANVAS_WIDTH']:
+                     dic[ 'CANVAS_' + canvaskey ] *= 24.*3600. #reconvert into s
+    
+    return dic
+            
+                
+                            
 ###############################################################################
 # Simplify output if only one object is retrieved
 ###############################################################################  
@@ -1214,10 +1257,13 @@ def check_dic(dic, keys, silent):
 ###############################################################################    
 if __name__ == '__main__':
 #    pass
-    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','WIDTH'], root='/Users/mx/Big_Data/BIG_DATA_NGTS/2016/', obj_row=1) #, fitsreader='fitsio', time_index=range(100000))
-#    for key in dic:
-#        print '------------'
-#        print type(dic[key])
-#        print key, dic[key].shape
-#        print dic[key]
-#        print '------------'
+    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id='canvas') #, fitsreader='fitsio', time_index=range(100000))
+
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
+    for key in dic:
+        print '------------'
+        print key, len( dic[key] )
+        print dic[key]
+        print type(dic[key])
+        print '------------'
+#    print dic
