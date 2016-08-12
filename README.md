@@ -46,32 +46,52 @@ On other devices, copy the github code from here and add it to your pythonpath.
 
 
 ---
-### 2. Examples
+### 2. Examples 
 
     import matplotlib.pyplot as plt
     from ngtsio import ngtsio
 
-#### a) Get and plot the detrended lightcurve for one object
+#### a) Get and plot the detrended lightcurve for one object 
+
+i. on Warwick's NGTS cluster
 
     dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
     plt.figure()
     plt.plot( dic['HJD'], dic['SYSREM_FLUX3'], 'k.' )
     plt.title( dic['OBJ_ID'] )
+    
+ii. on your own system, simply give the root directory path via
 
-#### b) Get and plot the mean locations of the first 100 listed objects on the CCD 
-(note that 'CCD_X' denotes the mean location, while 'CCDX' is the location per exposure)
+    root = 'User/johnwayne/ngts-data/'
+    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', root=root )
+    
+or
+    
+    roots = {}
+    roots['nights'] = 'User/johnwayne/foo/'
+    roots['sysrem'] = ''
+    roots['bls'] = 'User/johnwayne/bar/'
+    roots['canvas'] = 'User/johnwayne/spam/'
+    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', roots=roots )
+    
+Note: the directory structure needs to be such that root contains at least one directory like 'TEST16A', which then again contains the nightly fits files, or a directory like 'bls' or 'canvas'. If your directories are not set up like this, you have the option to give the exact filenames via the fnames command (but therefore cannot easily toggle between versions & fields).
+    
+    
+
+#### b) Get and plot the mean locations of the first 100 listed objects on the CCD (on Warwick's NGTS cluster)
+(note that 'CCD_X' denotes the mean location, while 'CCDX' is the location per exposure) 
 
     dic = ngtsio.get( 'NG0304-1115', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
     plt.figure()
     plt.plot( dic['CCD_X'], dic['CCD_Y'], 'k.' )
 
-#### c) Get the BLS results of some candidates 
-(note that obj_id 11 is not a BLS candidate, and that obj_id 1337 does not exist at all)
+#### c) Get the BLS results of some candidates (on Warwick's NGTS cluster)
+(note that obj_id 11 is not a BLS candidate, and that obj_id 1337 does not exist at all) 
 
     dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[11,46,49,54,1337] )
     print dic
 
-#### d) Get and print a bunch of keys with various non-standard settings
+#### d) Get and print a bunch of keys with various non-standard settings (on Warwick's NGTS cluster)
 
     dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
     for key in dic:
@@ -80,7 +100,7 @@ On other devices, copy the github code from here and add it to your pythonpath.
         print dic[key]
         print '------------'
 
-#### e) Compare two objects between TEST10 and TEST16
+#### e) Compare two objects between TEST10 and TEST16 (on Warwick's NGTS cluster)
 
     dic16 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112) #TEST16 is standard
     dic10 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112, ngts_version='TEST10')
