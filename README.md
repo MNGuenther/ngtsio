@@ -8,31 +8,48 @@ This readme contains:
 4. List of all valid keys (continued from 2)
 5. Execution time comparison
 
++++ 
+
+NEW: IF YOU GIVE THE PATH TO THE CANVAS FILES VIA 'roots=', YOU CAN READ IN 
+
+    obj_id='canvas' 
+    
+AND READ OUT E.G. 
+
+    'CANVAS_PERIOD' 
+    'CANVAS_Rs'
+    
++++
+
+
 ---
 ## Docs
 
-    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fnames=[], ngts_version='TEST16', fitsreader='pyfits'):
+    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fitsreader='fitsio', fnames=None, root=None, roots=None, silent=False, ngts_version='TEST16A'):
 
 Return a dictionary with all requested data for an NGTS field.
 
 ---
 ### 1. Installation
 
-##### a) On ngtshead
-To always use the latest version on ngtshead, simply indclude the following lines at the top of your code:
+##### a) Stable releases
+
+    pip install ngtsio
+
+##### b) Development versions
+To always use the latest development version on ngtshead, simply include the following lines at the top of your code:
 
     import sys
     sys.path.append('/home/maxg/bin/ngtsio')
 
-##### b) On another device
-The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases. Simply download and copy ngtsio.py into your pythonpath directory.
+On other devices, copy the github code from here and add it to your pythonpath.
 
 
 ---
 ### 2. Examples
 
     import matplotlib.pyplot as plt
-    import ngtsio
+    from ngtsio import ngtsio
 
 #### a) Get and plot the detrended lightcurve for one object
 
@@ -114,14 +131,28 @@ fitsio seems to perform best, see below for performance tests.
 if True and only one object is requested, it simplifies the dictionary entries into 1D nd.arrays (otherwise they will be 2D nd.arrays with an empty dimension). Standard is True.
 
 #####fnames (dictionary)
-Leave blank if you want to run it on NGTSHEAD/NGTS01/etc. This allows to manually pass a dictionary of filenames, if different than the directory structure on NGTSHEAD. Must contain the following three keys:
+Leave blank if you want to run it on Warwick's NGTS cluster. This allows to manually pass a dictionary of filenames, if different than the directory structure on NGTSHEAD. Contains the following keys:
 
         fnames['nights']
-        fnames['sysrem']
-        fnames['bls']
+        fnames['sysrem'] (only needed previous to TEST16A)
+        fnames['bls'] (optional)
+        fnames['canvas'] (optional)
+        
+#####root (string)
+Leave blank if you want to run it on Warwick's NGTS cluster. This allows to manually pass a root directory, if different than the directory structure on NGTSHEAD. The root directory structure has to be structured as: 
+
+        root/TEST16A/[*.fits, sysrem, bls, canvas].
+
+#####roots (dictionary)
+Leave blank if you want to run it on Warwick's NGTS cluster. This allows to manually pass different root directories, if different than the directory structure on NGTSHEAD. Contains the following keys:
+
+        roots['nights']
+        roots['sysrem'] (only needed previous to TEST16A)
+        roots['bls'] (optional)
+        roots['canvas'] (optional)
 
 #####ngtsversion (string)
-From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant if filenames are given manually.)
+From which directory shall the files be read? (Standard is usually the latest release. Irrelevant if filenames are given manually via fnames=fnames.)
 
     
 
@@ -168,6 +199,10 @@ From which directory shall the files be read? (Standard is 'TEST10'. Irrelevant 
 
     ['OBJ_ID', 'RANK', 'FLAGS', 'PERIOD', 'WIDTH', 'DEPTH', 'EPOCH', 'DELTA_CHISQ', 'CHISQ', 'NPTS_TRANSIT', 'NUM_TRANSITS', 'NBOUND_IN_TRANS', 'AMP_ELLIPSE', 'SN_ELLIPSE', 'GAP_RATIO', 'SN_ANTI', 'SN_RED', 'SDE', 'MCMC_PERIOD', 'MCMC_EPOCH', 'MCMC_WIDTH', 'MCMC_DEPTH', 'MCMC_IMPACT', 'MCMC_RSTAR', 'MCMC_MSTAR', 'MCMC_RPLANET', 'MCMC_PRP', 'MCMC_PRS', 'MCMC_PRB', 'MCMC_CHISQ_CONS', 'MCMC_CHISQ_UNC', 'MCMC_DCHISQ_MR', 'MCMC_PERIOD_ERR', 'MCMC_EPOCH_ERR', 'MCMC_WIDTH_ERR', 'MCMC_DEPTH_ERR', 'MCMC_RPLANET_ERR', 'MCMC_RSTAR_ERR', 'MCMC_MSTAR_ERR', 'MCMC_CHSMIN', 'CLUMP_INDX', 'CAT_IDX', 'PG_IDX', 'LC_IDX']
 
+
+####c) CANVAS Txt File
+
+    ['CANVAS_PERIOD','CANVAS_EPOCH','CANVAS_WIDTH','CANVAS_DEPTH','CANVAS_Rp','CANVAS_Rs',...]
 
 
 ---
