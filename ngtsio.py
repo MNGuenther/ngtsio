@@ -64,12 +64,12 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, silent=False, ngts_version='TEST16A'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, ngts_version='TEST16A'):
     
     if silent==False: print 'Field name:', fieldname      
 
     #::: filenames
-    if fnames is None: fnames = standard_fnames(fieldname, ngts_version, root)
+    if fnames is None: fnames = standard_fnames(fieldname, ngts_version, root, roots)
     
     if check_files(fnames):
         
@@ -116,52 +116,67 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 # Fielnames Formatting
 ###############################################################################
    
-def standard_fnames(fieldname, ngts_version, root):
+def standard_fnames(fieldname, ngts_version, root, roots):
     
-    if root is None:
+    if (root is None) and (roots is None):
         
         #::: on laptop (OS X)
         if sys.platform == "darwin":
         #    from fitsiochunked import ChunkedAdapter
             if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-                root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'+ngts_version+'/'
+                root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
                 
         #::: on Cambridge servers
         elif 'ra.phy.cam.ac.uk' in socket.gethostname():
             if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-                root = '/appch/data/mg719/ngts_pipeline_output/'+ngts_version+'/'
+                root = '/appch/data/mg719/ngts_pipeline_output/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
             
         #::: on ngtshead (LINUX)
-        elif 'ngts' in socket.gethostname(): #elif sys.platform == "linux" or sys.platform == "linux2":
-        #    import sys
-        #    sys.path.append('/home/sw/dev/fitsiochunked')
-        #    from fitsiochunked import ChunkedAdapter
+        elif 'ngts' in socket.gethostname(): 
             if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
-                root = '/ngts/pipeline/output/'+ngts_version+'/'
+                root = '/ngts/pipeline/output/'
     #        elif ngts_version == 'TEST13':
     #            root = '/home/philipp/TEST13/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
-                  
+        
+        roots = {}
+        roots['nights'] = root
+        roots['sysrem'] = root
+        roots['bls'] = root
+        roots['canvas'] = root
+        
+                              
+                              
+    #root will overwrite individual roots
+    elif root is not None:
+        
+        roots = {}
+        roots['nights'] = root
+        roots['sysrem'] = root
+        roots['bls'] = root
+        roots['canvas'] = root
+            
+    
+    #otherwise roots has been given (try-except will catch the None or non-existing entries)             
     else:
-        if ( root[-1] != '/' ):
-            root += '/'   
-        root += ngts_version+'/'
+        pass
+    
             
     fnames = {} 
     try:   
-        fnames['nights'] = glob.glob(root + fieldname+'*.fits')[0]
+        fnames['nights'] = glob.glob( os.path.join( roots['nights'], ngts_version, fieldname+'*.fits' ) )[0]
     except:
         fnames['nights'] = None
         print 'Warning: '+fieldname+': Fits files "nights" do not exist.'
     
     if (ngts_version=='TEST10') or (ngts_version=='TEST16'): #TEST16A contains the sysrem files as normal flux
         try:    
-            fnames['sysrem'] = glob.glob(root + 'sysrem/*' + fieldname + '*/*' + fieldname + '*_FLUX3.fits')[0]
+            fnames['sysrem'] = glob.glob( os.path.join( roots['sysrem'], ngts_version, 'sysrem', '*' + fieldname + '*', '*' + fieldname + '*_FLUX3.fits' ) )[0]
         except:
             fnames['sysrem'] = None
             print 'Warning: '+fieldname+': Fits files "sysrem" do not exist.'
@@ -169,19 +184,21 @@ def standard_fnames(fieldname, ngts_version, root):
         fnames['sysrem'] = None
         
     try:
-        fnames['bls'] = glob.glob(root + 'bls/' + '*' + fieldname + '*')[0]
+        fnames['bls'] = glob.glob( os.path.join( roots['bls'], ngts_version, 'bls', '*' + fieldname + '*') )[0]
     except:
         fnames['bls'] = None
         print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
         
     try:
-        fnames['canvas'] = glob.glob(root + 'canvas/' + '*' + fieldname + '*final_selection*')[0]
+        fnames['canvas'] = glob.glob( os.path.join( roots['canvas'], ngts_version, 'canvas', '*' + fieldname + '*final_selection.txt' ) )[0]
     except:
         fnames['canvas'] = None
         print 'Warning: '+fieldname+': Txt files "canvas" do not exist.'
 
-    if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
-        print 'Warning: None of the given fits files exist.'
+
+#    if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
+#        print 'Warning: None of the given fits files exist.'
+
 
     return fnames
    
@@ -271,22 +288,32 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
                 obj_ids = objid_6digit(obj_ids)
             
             #d2) the command 'bls' which reads out all 'bls' candidates
-            elif obj_ids == 'bls':               
-                if fitsreader=='astropy' or fitsreader=='pyfits':
-                    with pyfits.open(fnames['bls'], mode='denywrite') as hdulist:
-                        obj_ids = np.unique( hdulist['CANDIDATES'].data['OBJ_ID'].strip() )
-                        del hdulist['CANDIDATES'].data
+            elif obj_ids == 'bls':     
+                if fnames['bls'] is not None:          
+                    if fitsreader=='astropy' or fitsreader=='pyfits':
+                        with pyfits.open(fnames['bls'], mode='denywrite') as hdulist:
+                            obj_ids = np.unique( hdulist['CANDIDATES'].data['OBJ_ID'].strip() )
+                            del hdulist['CANDIDATES'].data
+                    
+                    elif fitsreader=='fitsio' or fitsreader=='cfitsio':     
+                        with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
+                            obj_ids = np.unique( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')) )
+    
+                    else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
                 
-                elif fitsreader=='fitsio' or fitsreader=='cfitsio':     
-                    with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
-                        obj_ids = np.unique( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')) )
-
-                else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')  
-                
+                else:
+                    print 'Warning: BLS files not found or could not be loaded.' 
+                    obj_ids = ['bls']
+                    
             #d3) the command 'canvas' which reads out all 'canvas' candidates
             elif obj_ids == 'canvas':   
-                canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
-                obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )                
+                if fnames['canvas'] is not None:
+                    canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
+                    obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )   
+                else:
+                    print 'Warning: CANVAS files not found or could not be loaded.' 
+                    obj_ids = ['canvas']
+                    
             else: 
                 sys.exit('Error: invalid input for "obj_id".') 
 
@@ -1257,13 +1284,18 @@ def check_dic(dic, keys, silent):
 ###############################################################################    
 if __name__ == '__main__':
 #    pass
-    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id='canvas') #, fitsreader='fitsio', time_index=range(100000))
+    roots = {}
+    roots['nights'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+    roots['bls'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+    roots['sysrem'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+    roots['canvas'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id='canvas', roots=roots) #, fitsreader='fitsio', time_index=range(100000))
 
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
-    for key in dic:
-        print '------------'
-        print key, len( dic[key] )
-        print dic[key]
-        print type(dic[key])
-        print '------------'
+#    for key in dic:
+#        print '------------'
+#        print key, len( dic[key] )
+#        print dic[key]
+#        print type(dic[key])
+#        print '------------'
 #    print dic
