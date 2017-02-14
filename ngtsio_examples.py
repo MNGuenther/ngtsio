@@ -16,7 +16,7 @@ Email: mg719@cam.ac.uk
 # Examples
 
 import matplotlib.pyplot as plt
-import ngtsio
+from ngtsio import ngtsio
 
 # a) Get and plot the lightcurve for one object
 

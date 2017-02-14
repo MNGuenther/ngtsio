@@ -64,7 +64,7 @@ From 'CANDIDATE' data (only for candidates):
 # Getter (Main Program)
 ###############################################################################
 
-def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, ngts_version='TEST16A'):
+def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, ngts_version='TEST18', set_nan=False):
     
     if silent==False: print 'Field name:', fieldname      
 
@@ -73,11 +73,19 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     
     if check_files(fnames):
         
-        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
-        if ngts_version=='TEST16A':
+        keys_0 = 1*keys
+        keys_0.append('OBJ_ID')
+        
+        #::: append FLUX and FLAGS for set_nan
+        if set_nan==True:
+            if 'FLUX' not in keys_0: keys.append('FLUX')
+            if 'FLAGS' not in keys_0: keys.append('FLAGS')
+                
+        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for > TEST16A
+        if ngts_version in ('TEST16A','TEST18'):
             if ('SYSREM_FLUX3' in keys) and ('FLUX' not in keys):
                 keys.append('FLUX')   
-                
+        
         #::: objects    
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
         if silent==False: print 'Object IDs (',len(obj_ids),'):', obj_ids
@@ -86,22 +94,31 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader)
         
         #::: get dictionary
-        dic, keys = get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader)
+        dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
         
         #::: simplify output if only for 1 object
         if simplify==True: dic = simplify_dic(dic)
         
-        #::: add fieldname
+        #::: add fieldname and ngts_version
         dic['FIELDNAME'] = fieldname
+        dic['NGTS_VERSION'] = ngts_version
         
-        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A
-        if ngts_version=='TEST16A':
+        #::: transfer 'FLUX' into 'SYSREM_FLUX3' for > TEST16A
+        if ngts_version in ('TEST16A','TEST18'):
             if 'SYSREM_FLUX3' in keys:
                 if 'FLUX' in dic.keys():
                     dic['SYSREM_FLUX3'] = dic['FLUX']
             
+        #::: set flagged values and flux==0 values to nan
+        if set_nan == True:
+            dic = set_nan_dic(dic)
+            
+        #::: remove FLUX and FLAGS if it was only needed for computing things
+        if ('FLUX' in dic.keys()) and ('FLUX' not in keys_0): del dic['FLUX']
+        if ('FLAGS' in dic.keys()) and ('FLAGS' not in keys_0): del dic['FLAGS']
+        
         #::: check if all keys were retrieved
-        check_dic(dic, keys, silent)
+        check_dic(dic, keys_0, silent)
         
     
         return dic
@@ -118,37 +135,47 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
    
 def standard_fnames(fieldname, ngts_version, root, roots):
     
+    valid_fields = [ 'TEST10', 'TEST16', 'TEST16A', 'TEST18' ]
+    
     if (root is None) and (roots is None):
         
         #::: on laptop (OS X)
         if sys.platform == "darwin":
         #    from fitsiochunked import ChunkedAdapter
-            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+            if ngts_version in valid_fields:
                 root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
             else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
+            root_dil = root
                 
         #::: on Cambridge servers
         elif 'ra.phy.cam.ac.uk' in socket.gethostname():
-            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+            if ngts_version in valid_fields:
                 root = '/appch/data/mg719/ngts_pipeline_output/'
             else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
+            root_dil = root
             
         #::: on ngtshead (LINUX)
         elif 'ngts' in socket.gethostname(): 
-            if ngts_version == 'TEST10' or 'TEST16' or 'TEST16A':
+            if ngts_version in [ 'TEST10', 'TEST16', 'TEST16A' ]:
                 root = '/ngts/pipeline/output/'
+            elif ngts_version=='TEST18':
+                root = '/wasp/scratch/'
     #        elif ngts_version == 'TEST13':
     #            root = '/home/philipp/TEST13/'
             else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are "TEST10", "TEST16", "TEST16A".')
+                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
+            root_dil = '/home/maxg/'
         
         roots = {}
         roots['nights'] = root
         roots['sysrem'] = root
         roots['bls'] = root
+        roots['dilution'] = root_dil
         roots['canvas'] = root
+        
+        print roots
         
                               
                               
@@ -159,6 +186,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         roots['nights'] = root
         roots['sysrem'] = root
         roots['bls'] = root
+        roots['dilution'] = root
         roots['canvas'] = root
             
     
@@ -188,6 +216,12 @@ def standard_fnames(fieldname, ngts_version, root, roots):
     except:
         fnames['bls'] = None
         print 'Warning: '+fieldname+': Fits files "bls" do not exist.'
+        
+    try:
+        fnames['dilution'] = glob.glob( os.path.join( roots['bls'], 'DILUTION', 'dilution-' + fieldname + '.fits') )[0]
+    except:
+        fnames['dilution'] = None
+        print 'Warning: '+fieldname+': Fits files "dilution" do not exist.'
         
     try:
         fnames['canvas'] = glob.glob( os.path.join( roots['canvas'], ngts_version, 'canvas', '*' + fieldname + '*final_selection.txt' ) )[0]
@@ -347,13 +381,18 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
         ind_objs = obj_rows
         
         # a) test if non-empty list
-        if isinstance(ind_objs, (collections.Sequence, np.ndarray)) and not isinstance(ind_objs, (str, unicode)) and len(ind_objs) > 0:
+        if isinstance(ind_objs, (collections.Sequence, np.ndarray)) and not isinstance(ind_objs, (str, unicode)) and len(ind_objs) > 0:           
             # if list of str or float -> convert to list of int           
             if isinstance(ind_objs[0], (str,float)):
                 ind_objs = map(int, ind_objs)
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
-                ind_objs = [x-1 for x in ind_objs]
+                if 0 in ind_objs:
+                    print 'Warning: "obj_rows" contained 0, but "indexing" was set to "fits" (starts counting from 1).'
+                    print 'Warning: "indexing" was automatically set to "python" instead to avoid errors.'
+                    indexing = 'python'
+                else:
+                    ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
             obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
             
@@ -373,7 +412,12 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             ind_objs = [ int(ind_objs) ]
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
-                ind_objs = [x-1 for x in ind_objs]
+                if 0 in ind_objs:
+                    print 'Warning: "obj_rows" contained 0, but "indexing" was set to "fits" (starts counting from 1).'
+                    print 'Warning: "indexing" was automatically set to "python" instead to avoid errors.'
+                    indexing = 'python'
+                else:
+                    ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
             obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
             
@@ -383,7 +427,12 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             ind_objs = [ int(ind_objs) ]
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
-                ind_objs = [x-1 for x in ind_objs]
+                if 0 in ind_objs:
+                    print 'Warning: "obj_rows" contained 0, but "indexing" was set to "fits" (starts counting from 1).'
+                    print 'Warning: "indexing" was automatically set to "python" instead to avoid errors.'
+                    indexing = 'python'
+                else:
+                    ind_objs = [x-1 for x in ind_objs]
             # connect obj_ids to ind_objs
             obj_ids = get_objids_from_indobjs(fnames, ind_objs, fitsreader)
 
@@ -848,7 +897,7 @@ def get_time_actionid_from_range(actionid_range):
 ###############################################################################
 # get dictionary with fitsio/pyfits getters 
 ###############################################################################
-def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
+def get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader):
 
     #::: check keys
     if isinstance (keys, str): keys = [keys]
@@ -871,8 +920,8 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
             keys.append('OBJ_ID')   
     
             
-        if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
-        elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=ind_time) 
+        if fitsreader=='astropy' or fitsreader=='pyfits': dic = pyfits_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=ind_time) 
+        elif fitsreader=='fitsio' or fitsreader=='cfitsio': dic = fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=ind_time) 
         else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')    
         
         dic = get_canvas_data( fnames, keys, dic )                        
@@ -906,7 +955,7 @@ def get_data(fnames, obj_ids, ind_objs, keys, ind_time, fitsreader):
 ###############################################################################
 
 
-def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
+def pyfits_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
     
     #::: dictionary
     dic = {}
@@ -963,7 +1012,7 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
             #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
             ind_objs_bls = np.in1d(hdulist_bls['CANDIDATES'].data['OBJ_ID'].strip(), obj_ids).nonzero()[0] #indices of the candidates
-            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].data['RANK'] == 1 )[0]
+            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].data['RANK'] == bls_rank )[0]
             ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
             
             
@@ -1024,14 +1073,14 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
 ###############################################################################
 # fitsio getter 
 ###############################################################################
-def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
+def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(None), CCD_bzero=0., CCD_precision=32., CENTD_bzero=0., CENTD_precision=1024.):
         
     #::: dictionary
     dic = {}
         
         
     ##################### fnames['nights'] #####################
-    if fnames['nights'] is not None:
+    if ('nights' in fnames) and (fnames['nights'] is not None):
         with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
             
             #::: fitsio does not work with slice arguments, convert to list
@@ -1110,7 +1159,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             
             
     ##################### fnames['sysrem'] #####################
-    if fnames['sysrem'] is not None:               
+    if ('sysrem' in fnames) and (fnames['sysrem'] is not None):               
         with fitsio.FITS(fnames['sysrem'], vstorage='object') as hdulist_sysrem:
             j = 0
             while j!=-1:
@@ -1146,13 +1195,13 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
             
             
     ##################### fnames['bls'] #####################
-    if fnames['bls'] is not None:                    
+    if ('bls' in fnames) and (fnames['bls'] is not None):         
         with fitsio.FITS(fnames['bls'], vstorage='object') as hdulist_bls:
             
             #first little hack: transform from S26 into S6 dtype with .astype('|S6') or .strip()!
             #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
             ind_objs_bls = np.in1d( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')), obj_ids).nonzero()[0] #indices of the candidates
-            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].read(columns='RANK') == 1 )[0]
+            ind_rank1 = np.where( hdulist_bls['CANDIDATES'].read(columns='RANK') == bls_rank )[0]
             ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
             
             
@@ -1208,7 +1257,33 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, ind_time=slice(None), CCD_b
                         # initialize empty dictionary entry, size of all requested ind_objs
                         dic[key] = np.zeros( len(ind_objs) )
              
-    
+
+            
+    ##################### fnames['dilution'] #####################
+    if ('dilution' in fnames) and (fnames['dilution'] is not None):   
+        print fnames['dilution']
+        with fitsio.FITS(fnames['dilution'], vstorage='object') as hdulist_dil:
+            
+            ind_objs_dil = np.in1d( hdulist_dil[1].read(columns='OBJ_ID'), obj_ids.astype(float)).nonzero()[0] #indices of the candidates         
+            
+            #::: CATALOGUE
+            hdukey = 1
+            hdunames = hdulist_dil[hdukey].get_colnames()
+            #::: little hack: the dilution fits file has no capital letters, so de-capitalise the strings here
+            dilkeys = [ x.lower() for x in keys ]
+            subkeys = np.intersect1d(hdunames, dilkeys)
+            # EXCLUDE OBJ_IDs from subkeys
+            if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
+            if 'obj_id' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='obj_id'))
+                
+            if subkeys.size!=0:
+                data = hdulist_dil[hdukey].read(columns=subkeys, rows=ind_objs_dil)
+                if isinstance(subkeys, str): subkeys = [subkeys]
+                for key in subkeys:
+                    dic[key.upper()] = data[key] #copy.deepcopy( data[key] )
+                del data
+            
+            
     return dic
 
 
@@ -1228,13 +1303,24 @@ def get_canvas_data( fnames, keys, dic ):
             if ('CANVAS_' + canvaskey) in keys:
                 #::: initialize dic nan-array
                 dic[ 'CANVAS_' + canvaskey ] = np.zeros( len(dic['OBJ_ID']) ) * np.nan
+                
                 #::: crossmatch objects
                 for i, obj_id in enumerate( dic['OBJ_ID'] ):
                     if obj_id in canvas_obj_ids:
                         dic[ 'CANVAS_' + canvaskey ][i] = canvasdata[canvaskey][ canvas_obj_ids == obj_id ]
             
-                if ('CANVAS_' + canvaskey) in ['CANVAS_PERIOD', 'CANVAS_WIDTH']:
+                #:: rescale period (given in days in canvas)
+                if ('CANVAS_' + canvaskey) == 'CANVAS_PERIOD':
                      dic[ 'CANVAS_' + canvaskey ] *= 24.*3600. #reconvert into s
+                     
+                #::: rescale width (given as fraction of period in canvas)
+                if ('CANVAS_' + canvaskey) == 'CANVAS_WIDTH':
+                    for i, obj_id in enumerate( dic['OBJ_ID'] ):
+                        if obj_id in canvas_obj_ids:
+                            dic[ 'CANVAS_WIDTH' ][i] = ( canvasdata['WIDTH'][ canvas_obj_ids == obj_id ] * canvasdata['PERIOD'][ canvas_obj_ids == obj_id ] ) *24.*3600.
+                    
+                    
+                    
     
     return dic
             
@@ -1251,6 +1337,48 @@ def simplify_dic(dic):
         elif (len(value.shape) > 1) and (value.shape[1] == 1):
             dic[key] = value[:,0]
         
+    return dic
+    
+
+                           
+###############################################################################
+# Set flagged values to nan
+###############################################################################  
+def set_nan_dic(dic, key='FLUX'):  
+    if len(dic['OBJ_ID']) == 1: 
+        dic = set_nan_single(dic, key)      
+    elif len(dic['OBJ_ID']) > 1: 
+        dic = set_nan_multi(dic, key)  
+    return dic
+                
+                            
+#::: if only 1 object is contained in dic
+def set_nan_single(dic, key):
+    ###### REMOVE BROKEN ITEMS #######
+    #::: nan
+    ind_broken = np.where( (dic[key] == 0.) | (dic['FLAGS'] > 0) )
+    if key in dic: dic[key][ind_broken] = np.nan
+#    dic['HJD'][ind_broken] = np.nan #this is not allowed to be set to nan!!! Otherwise the binning will be messed up!!!
+    if 'CCDX' in dic: dic['CCDX'][ind_broken] = np.nan
+    if 'CCDY' in dic: dic['CCDY'][ind_broken] = np.nan
+    if 'CENTDX' in dic: dic['CENTDX'][ind_broken] = np.nan
+    if 'CENTDY' in dic: dic['CENTDY'][ind_broken] = np.nan
+    return dic
+    
+
+#::: if multiple objects are contained in dic
+def set_nan_multi(dic, key):
+    ###### REMOVE BROKEN ITEMS #######
+    #::: nan
+    N_obj = dic[key].shape[0]
+    for obj_nr in range(N_obj):
+        ind_broken = np.where( dic[key][obj_nr] == 0. )
+        if key in dic: dic[key][obj_nr,ind_broken] = np.nan
+    #    dic['HJD'][ind_broken] = np.nan #this is not allowed to be set to nan!!! Otherwise the binning will be messed up!!!
+        if 'CCDX' in dic: dic['CCDX'][obj_nr,ind_broken] = np.nan
+        if 'CCDY' in dic: dic['CCDY'][obj_nr,ind_broken] = np.nan
+        if 'CENTDX' in dic: dic['CENTDX'][obj_nr,ind_broken] = np.nan
+        if 'CENTDY' in dic: dic['CENTDY'][obj_nr,ind_broken] = np.nan
     return dic
     
     
@@ -1289,13 +1417,17 @@ if __name__ == '__main__':
     roots['bls'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
     roots['sysrem'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
     roots['canvas'] = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
-    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id='canvas', roots=roots) #, fitsreader='fitsio', time_index=range(100000))
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
+    dic = get( 'NG0304-1115', ['SYSREM_FLUX3','FLAGS','DILUTION'], obj_row=range(10), time_hjd=range(700,710), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
 
+#    for i in range(len(dic['OBJ_ID'])):
+#        print dic['OBJ_ID'][i], '\t', dic['PERIOD'][i]/3600./24., 'd\t', dic['CANVAS_PERIOD'][i]/3600./24., 'd\t', dic['WIDTH'][i]/3600., 'h\t', dic['CANVAS_WIDTH'][i]/3600., 'h\t' 
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
-#    for key in dic:
-#        print '------------'
-#        print key, len( dic[key] )
-#        print dic[key]
+    for key in dic:
+        print '------------'
+        print key, len( dic[key] )
+        print dic[key]
 #        print type(dic[key])
 #        print '------------'
 #    print dic
+#        print dic['FLUX']
