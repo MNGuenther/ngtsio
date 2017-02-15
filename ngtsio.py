@@ -1201,7 +1201,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
             #second little hack: only choose rank 1 output (5 ranks output by orion into the fits files, in 5 subsequent rows)
             ind_objs_bls = np.in1d( np.char.strip(hdulist_bls['CANDIDATES'].read(columns='OBJ_ID')), obj_ids).nonzero()[0] #indices of the candidates
             ind_rank1 = np.where( hdulist_bls['CANDIDATES'].read(columns='RANK') == bls_rank )[0]
-            ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 )
+            ind_objs_bls = np.intersect1d( ind_objs_bls, ind_rank1 ) #indices of the objects in the BLS file
             
             
             #::: CATALOGUE
@@ -1245,17 +1245,18 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                     # go through all subkeys
                     for key in subkeys:
                         # initialize empty dictionary entry, size of all requested ind_objs
-                        dic[key] = np.zeros( len(ind_objs) )
-                        # go through all requested obj_ids
+                        dic[key] = np.zeros( len(ind_objs) ) * np.nan
+                        #go through all requested obj_ids
                         for i, singleobj_id in enumerate(obj_ids):
                             if singleobj_id in np.char.strip(bls_data['OBJ_ID']):
                                 i_bls = np.where( np.char.strip(bls_data['OBJ_ID']) == singleobj_id )
                                 dic[key][i] = bls_data[key][i_bls]
+                        
                 else:
                     # go through all subkeys
                     for key in subkeys:
                         # initialize empty dictionary entry, size of all requested ind_objs
-                        dic[key] = np.zeros( len(ind_objs) )
+                        dic[key] = np.zeros( len(ind_objs) ) * np.nan
              
 
             
@@ -1264,78 +1265,57 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
         with fitsio.FITS(fnames['dilution'], vstorage='object') as hdulist_dil:
             
             obj_ids_dil = [x.zfill(6) for x in hdulist_dil[1].read(columns='obj_id').astype(int).astype('|S6')]            
-            print len(obj_ids_dil), obj_ids_dil[0:30]
-            print '*****'
-            print len(obj_ids), obj_ids[0:30]
-            print '*****'
-            print np.in1d( obj_ids_dil, obj_ids )[0:30]
-            print '*****'
+#            print len(obj_ids_dil), obj_ids_dil[0:30]
+#            print '*****'
+#            print len(obj_ids), obj_ids[0:30]
+#            print '*****'
+#            print np.in1d( obj_ids_dil, obj_ids )[0:30]
+#            print '*****'
 #            print np.in1d( obj_ids_dil, obj_ids ).nonzero()[0]
-            ind_objs_dil = np.in1d( obj_ids_dil, obj_ids ).nonzero()[0] #indices of the candidates    
+            ind_objs_dil = np.in1d( obj_ids_dil, obj_ids ).nonzero()[0] #indices of the cross-mapped candidates in the DILUTION file
+            ind_objs_dil2 = np.in1d( obj_ids, obj_ids_dil ).nonzero()[0] #indices of the cross-mapped candidates in the INPUT LIST
+#            print ind_objs_dil
+#            print ind_objs_dil2
             
-            print '*****'
-            i = 0
-            for j, obj_id in enumerate( obj_ids[0:30] ):
-                if obj_id in obj_ids_dil:
-                    print j, obj_id, 'yes'
-                    i += 1
-                else:
-                    print j, obj_id, 'no'
-            print 'i:',i
-            print '*****'
-                    
-#            print len(ind_objs_dil)
-#            print 
-            err
-#            #::: CATALOGUE
-#            hdukey = 1
-#            hdunames = hdulist_dil[hdukey].get_colnames()
-#            #::: little hack: the dilution fits file has no capital letters, so de-capitalise the strings here
-#            dilkeys = [ x.lower() for x in keys ]
-#            subkeys = np.intersect1d(hdunames, dilkeys)
-#            # EXCLUDE OBJ_IDs from subkeys
-#            if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-#            if 'obj_id' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='obj_id'))
-#                
-#            if subkeys.size!=0:
-#                data = hdulist_dil[hdukey].read(columns=subkeys, rows=ind_objs_dil)
-#                if isinstance(subkeys, str): subkeys = [subkeys]
-#                for key in subkeys:
-#                    dic[key.upper()] = data[key] #copy.deepcopy( data[key] )
-#                del data
-            
+#            print '*****'
+#            i = 0
+#            for j, obj_id in enumerate( obj_ids[0:30] ):
+#                if obj_id in obj_ids_dil:
+#                    print j, obj_id, 'yes'
+#                    i += 1
+#                else:
+#                    print j, obj_id, 'no'
+#            print 'i:',i
+#            print '*****'
             
             #::: CANDIDATES (different indices!)
             hdukey = 1       
-            hdunames = hdulist_bls[hdukey].get_colnames()
-            subkeys = np.intersect1d(hdunames, keys)
+            hdunames = hdulist_dil[hdukey].get_colnames()
+            #::: little hack: the dilution fits file has no capital letters, so de-capitalise the strings here
+            dilkeys = [ x.lower() for x in keys ]
+            subkeys = np.intersect1d(hdunames, dilkeys)
             # EXCLUDE OBJ_IDs from subkeys
             if 'OBJ_ID' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='OBJ_ID'))
-            if 'FLAGS' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='FLAGS'))
+            if 'obj_id' in subkeys: subkeys = np.delete(subkeys, np.where(subkeys=='obj_id'))
                
             if subkeys.size!=0:
-                    
                 # see if any BLS candidates are in the list
-                if len(ind_objs_bls)!=0:
-                    
-                    bls_data = hdulist_bls[hdukey].read(columns=np.append(subkeys, 'obj_id'), rows=ind_objs_bls)
-#                    bls_data['obj_id'] = 
+                if len(ind_objs_dil)!=0:
+                    dil_data = hdulist_dil[hdukey].read(columns=np.append(subkeys, 'obj_id'), rows=ind_objs_dil)
+                    dil_data['obj_id'] = [x.zfill(6) for x in dil_data['obj_id'].astype(int).astype('|S6')] 
                     
                     # write them at the right place into the dictionary
                     # go through all subkeys
                     for key in subkeys:
                         # initialize empty dictionary entry, size of all requested ind_objs
-                        dic[key] = np.zeros( len(ind_objs) )
-                        # go through all requested obj_ids
-                        for i, singleobj_id in enumerate(obj_ids):
-                            if singleobj_id in np.char.strip(bls_data['obj_id']):
-                                i_bls = np.where( np.char.strip(bls_data['obj_id']) == singleobj_id )
-                                dic[key][i] = bls_data[key][i_bls]
+                        dic[key.upper()] = np.zeros( len(ind_objs) ) * np.nan
+                        dic[key.upper()][ ind_objs_dil2 ] = dil_data[key.lower()]
+                        
                 else:
                     # go through all subkeys
                     for key in subkeys:
                         # initialize empty dictionary entry, size of all requested ind_objs
-                        dic[key] = np.zeros( len(ind_objs) )
+                        dic[key.upper()] = np.zeros( len(ind_objs) ) * np.nan
             
             
     return dic
@@ -1372,10 +1352,7 @@ def get_canvas_data( fnames, keys, dic ):
                     for i, obj_id in enumerate( dic['OBJ_ID'] ):
                         if obj_id in canvas_obj_ids:
                             dic[ 'CANVAS_WIDTH' ][i] = ( canvasdata['WIDTH'][ canvas_obj_ids == obj_id ] * canvasdata['PERIOD'][ canvas_obj_ids == obj_id ] ) *24.*3600.
-                    
-                    
-                    
-    
+                       
     return dic
             
                 
@@ -1467,15 +1444,15 @@ def check_dic(dic, keys, silent):
 if __name__ == '__main__':
 #    pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
-    dic = get( 'NG0304-1115', ['DILUTION'], ngts_version='TEST16A', time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
+    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 
 #    for i in range(len(dic['OBJ_ID'])):
 #        print dic['OBJ_ID'][i], '\t', dic['PERIOD'][i]/3600./24., 'd\t', dic['CANVAS_PERIOD'][i]/3600./24., 'd\t', dic['WIDTH'][i]/3600., 'h\t', dic['CANVAS_WIDTH'][i]/3600., 'h\t' 
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
     for key in dic:
         print '------------'
-        print key, len( dic[key] )
-#        print dic[key]
+        print key #len( dic[key] )
+        print dic[key]
 #        print type(dic[key])
 #        print '------------'
 #    print dic
