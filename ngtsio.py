@@ -146,7 +146,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
                 root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-	    root_dil = root
+#	    root_dil = root
                 
         #::: on Cambridge servers
         elif 'ra.phy.cam.ac.uk' in socket.gethostname():
@@ -154,25 +154,25 @@ def standard_fnames(fieldname, ngts_version, root, roots):
                 root = '/appch/data/mg719/ngts_pipeline_output/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-            root_dil = root
+#            root_dil = root
             
         #::: on ngtshead (LINUX)
         elif 'ngts' in socket.gethostname(): 
             if ngts_version in [ 'TEST10', 'TEST16', 'TEST16A' ]:
                 root = '/ngts/pipeline/output/'
             elif ngts_version=='TEST18':
-		root = '/home/maxg/ngts_pipeline_output/'
+                root = '/home/maxg/ngts_pipeline_output/'
     #        elif ngts_version == 'TEST13':
     #            root = '/home/philipp/TEST13/'
             else:
                 sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-            root_dil = '/home/maxg/ngts_pipeline_output/'
+#            root_dil = '/home/maxg/ngts_pipeline_output/'
 
         roots = {}
         roots['nights'] = root
         roots['sysrem'] = root 
         roots['bls'] = root
-        roots['dilution'] = root_dil
+        roots['dilution'] = root
         roots['canvas'] = root
                               
                               
@@ -217,7 +217,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         fnames['bls'] = None
         print 'Warning: '+fieldname+': Fits files "bls" do not exist in '+f_bls
         
-    f_dil = os.path.join( roots['dilution'], 'DILUTION', 'dilution-' + fieldname + '.fits')
+    f_dil = os.path.join( roots['dilution'], ngts_version, 'DILUTION', 'dilution*' + fieldname + '*.fits')
     try:
         fnames['dilution'] = glob.glob( f_dil )[0]
     except:
@@ -1444,16 +1444,19 @@ def check_dic(dic, keys, silent):
 if __name__ == '__main__':
 #    pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
-    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
+#    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
+    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 
-#    for i in range(len(dic['OBJ_ID'])):
-#        print dic['OBJ_ID'][i], '\t', dic['PERIOD'][i]/3600./24., 'd\t', dic['CANVAS_PERIOD'][i]/3600./24., 'd\t', dic['WIDTH'][i]/3600., 'h\t', dic['CANVAS_WIDTH'][i]/3600., 'h\t' 
-#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
-    for key in dic:
-        print '------------'
-        print key #len( dic[key] )
-        print dic[key]
-#        print type(dic[key])
+    for i, obj_id in enumerate(dic['OBJ_ID']):
+        print obj_id, dic['DILUTION'][i]
+##    for i in range(len(dic['OBJ_ID'])):
+##        print dic['OBJ_ID'][i], '\t', dic['PERIOD'][i]/3600./24., 'd\t', dic['CANVAS_PERIOD'][i]/3600./24., 'd\t', dic['WIDTH'][i]/3600., 'h\t', dic['CANVAS_WIDTH'][i]/3600., 'h\t' 
+##    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
+#    for key in dic:
 #        print '------------'
-#    print dic
-#        print dic['FLUX']
+#        print key #len( dic[key] )
+#        print dic[key]
+##        print type(dic[key])
+##        print '------------'
+##    print dic
+##        print dic['FLUX']
