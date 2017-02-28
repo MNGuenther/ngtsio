@@ -25,17 +25,16 @@ AND READ OUT E.G.
 ---
 ## Docs
 
-    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, simplify=True, indexing='fits', fitsreader='fitsio', fnames=None, root=None, roots=None, silent=False, ngts_version='TEST16A'):
+    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, ngts_version='TEST18', set_nan=False):
 
 Return a dictionary with all requested data for an NGTS field.
 
 ---
 ### 1. Installation
 
-##### a) Stable releases
+    pip install -U ngtsio
 
-    pip install ngtsio
-
+<!---
 ##### b) Development versions
 To always use the latest development version on ngtshead, simply include the following lines at the top of your code:
 
@@ -43,7 +42,7 @@ To always use the latest development version on ngtshead, simply include the fol
     sys.path.append('/home/maxg/bin/ngtsio')
 
 On other devices, copy the github code from here and add it to your pythonpath.
-
+-->
 
 ---
 ### 2. Examples 
@@ -53,7 +52,7 @@ On other devices, copy the github code from here and add it to your pythonpath.
 
 #### a) Get and plot the detrended lightcurve for one object 
 
-i. on Warwick's NGTS cluster
+i. on Warwick's or Cambridge's NGTS cluster
 
     dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
     plt.figure()
@@ -171,8 +170,15 @@ Leave blank if you want to run it on Warwick's NGTS cluster. This allows to manu
         roots['bls'] (optional)
         roots['canvas'] (optional)
 
+#####silent (boolean)
+Whether a short report should be printed or not.
+
 #####ngtsversion (string)
 From which directory shall the files be read? (Standard is usually the latest release. Irrelevant if filenames are given manually via fnames=fnames.)
+
+#####set_nan (boolean)
+Whether all flagged values in CCDX/Y, CENDTX/Y and FLUX should be replaced with NAN or not (if not, they might be zeros or any reasonable/unreasonable real numbers).
+
 
     
 
@@ -220,9 +226,14 @@ From which directory shall the files be read? (Standard is usually the latest re
     ['OBJ_ID', 'RANK', 'FLAGS', 'PERIOD', 'WIDTH', 'DEPTH', 'EPOCH', 'DELTA_CHISQ', 'CHISQ', 'NPTS_TRANSIT', 'NUM_TRANSITS', 'NBOUND_IN_TRANS', 'AMP_ELLIPSE', 'SN_ELLIPSE', 'GAP_RATIO', 'SN_ANTI', 'SN_RED', 'SDE', 'MCMC_PERIOD', 'MCMC_EPOCH', 'MCMC_WIDTH', 'MCMC_DEPTH', 'MCMC_IMPACT', 'MCMC_RSTAR', 'MCMC_MSTAR', 'MCMC_RPLANET', 'MCMC_PRP', 'MCMC_PRS', 'MCMC_PRB', 'MCMC_CHISQ_CONS', 'MCMC_CHISQ_UNC', 'MCMC_DCHISQ_MR', 'MCMC_PERIOD_ERR', 'MCMC_EPOCH_ERR', 'MCMC_WIDTH_ERR', 'MCMC_DEPTH_ERR', 'MCMC_RPLANET_ERR', 'MCMC_RSTAR_ERR', 'MCMC_MSTAR_ERR', 'MCMC_CHSMIN', 'CLUMP_INDX', 'CAT_IDX', 'PG_IDX', 'LC_IDX']
 
 
-####c) CANVAS Txt File
+####d) CANVAS Text File (from >= TEST16A)
 
     ['CANVAS_PERIOD','CANVAS_EPOCH','CANVAS_WIDTH','CANVAS_DEPTH','CANVAS_Rp','CANVAS_Rs',...]
+
+
+####e) DILUTION Fits File (from >= TEST16A)
+
+    'DILUTION'
 
 
 ---
