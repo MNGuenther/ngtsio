@@ -158,9 +158,9 @@ def standard_fnames(fieldname, ngts_version, root, roots):
             
         #::: on ngtshead (LINUX)
         elif 'ngts' in socket.gethostname(): 
-            if ngts_version in [ 'TEST10', 'TEST16', 'TEST16A' ]:
+            if ngts_version in [ 'TEST10', 'TEST16' ]:
                 root = '/ngts/pipeline/output/'
-            elif ngts_version=='TEST18':
+            elif ngts_version in [ 'TEST16A', 'TEST18' ]:
                 root = '/home/maxg/ngts_pipeline_output/'
     #        elif ngts_version == 'TEST13':
     #            root = '/home/philipp/TEST13/'
