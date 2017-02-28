@@ -1,5 +1,5 @@
 # ngtsio
-Wrapper for astropy and cfitsio readers for NGTS data files. The newest stable release can be found here:  https://github.com/MNGuenther/ngtsio/releases.
+Wrapper for astropy and cfitsio readers for NGTS data files.
 This readme contains:
 
 1. Installation
@@ -7,19 +7,6 @@ This readme contains:
 3. Parameter descriptions
 4. List of all valid keys (continued from 2)
 5. Execution time comparison
-
-+++ 
-
-NEW: IF YOU GIVE THE PATH TO THE CANVAS FILES VIA 'roots=', YOU CAN READ IN 
-
-    obj_id='canvas' 
-    
-AND READ OUT E.G. 
-
-    'CANVAS_PERIOD' 
-    'CANVAS_Rs'
-    
-+++
 
 
 ---
