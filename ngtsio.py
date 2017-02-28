@@ -173,14 +173,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 
         #::: get dictionary
         dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
-
-        #::: simplify output if only for 1 object
-        if simplify==True: dic = simplify_dic(dic)
-
-        #::: add fieldname and ngts_version
-        dic['FIELDNAME'] = fieldname
-        dic['NGTS_VERSION'] = ngts_version
-
+        
         #::: transfer 'FLUX' into 'SYSREM_FLUX3' for > TEST16A
         if ngts_version in ('TEST16A','TEST18'):
             if 'SYSREM_FLUX3' in keys:
@@ -195,6 +188,14 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         if ('FLUX' in dic.keys()) and ('FLUX' not in keys_0): del dic['FLUX']
         if ('FLAGS' in dic.keys()) and ('FLAGS' not in keys_0): del dic['FLAGS']
 
+        #::: simplify output if only for 1 object
+        if simplify==True: 
+            dic = simplify_dic(dic)
+        
+        #::: add fieldname and ngts_version
+        dic['FIELDNAME'] = fieldname
+        dic['NGTS_VERSION'] = ngts_version
+        
         #::: check if all keys were retrieved
         check_dic(dic, keys_0, silent)
 
@@ -1471,6 +1472,7 @@ def get_canvas_data( fnames, keys, dic ):
 def simplify_dic(dic):
 
     for key, value in dic.iteritems():
+        print key, value
         if value.shape[0] == 1:
             dic[key] = value[0]
         elif (len(value.shape) > 1) and (value.shape[1] == 1):
@@ -1549,11 +1551,13 @@ def check_dic(dic, keys, silent):
 ###############################################################################
 # MAIN
 ###############################################################################
-#if __name__ == '__main__':
-##    pass
+if __name__ == '__main__':
+    pass
 ##    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
 ##    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='astropy', time_index=range(1000))
+#    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_row=10, set_nan=True, fitsreader='fitsio', time_index=range(1000))
+#    print dic
 ##    dic2 = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='fitsio', time_index=range(1000))
 #
 ##    print dic['DILUTION'] == dic2['DILUTION']
