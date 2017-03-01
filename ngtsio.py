@@ -11,11 +11,15 @@ Cambridge CB3 0HE
 Email: mg719@cam.ac.uk
 """
 
+import warnings
 import astropy.io.fits as pyfits
 import fitsio
 import os, sys, glob, socket, collections, datetime
 import numpy as np
 
+def warning_on_one_line(message, category, filename, lineno, file=None, line=''):
+    return '\n%s: %s, line %s\n\t %s\n' % (category.__name__, filename, lineno, message)
+warnings.formatwarning = warning_on_one_line
 
 
 
@@ -169,7 +173,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         if silent==False: print 'Object IDs (',len(obj_ids),'):', obj_ids
 
         #::: time
-        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader)
+        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader, silent)
 
         #::: get dictionary
         dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
@@ -277,7 +281,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         fnames['nights'] = glob.glob( f_nights )[0]
     except:
         fnames['nights'] = None
-        print 'Warning: '+fieldname+': Fits files "nights" do not exist in '+f_nights
+        warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
 
     if (ngts_version=='TEST10') or (ngts_version=='TEST16'): #TEST16A contains the sysrem files as normal flux
 	f_sysrem = os.path.join( roots['sysrem'], ngts_version, 'sysrem', '*' + fieldname + '*', '*' + fieldname + '*_FLUX3.fits' )
@@ -285,7 +289,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
             fnames['sysrem'] = glob.glob( f_sysrem )[0]
         except:
             fnames['sysrem'] = None
-            print 'Warning: '+fieldname+': Fits files "sysrem" do not exist in '+f_sysrem
+            warnings.warn( str(fieldname)+': Fits files "sysrem" do not exist in '+str(f_sysrem) )
     else:
         fnames['sysrem'] = None
 
@@ -294,25 +298,21 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         fnames['bls'] = glob.glob( f_bls )[0]
     except:
         fnames['bls'] = None
-        print 'Warning: '+fieldname+': Fits files "bls" do not exist in '+f_bls
+        warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
 
     f_dil = os.path.join( roots['dilution'], ngts_version, 'DILUTION', 'dilution*' + fieldname + '*.fits')
     try:
         fnames['dilution'] = glob.glob( f_dil )[0]
     except:
         fnames['dilution'] = None
-        print 'Warning: '+fieldname+': Fits files "dilution" do not exist in '+f_dil
+        warnings.warn( str(fieldname)+': Fits files "dilution" do not exist in '+str(f_dil) )
 
     f_canvas = os.path.join( roots['canvas'], ngts_version, 'canvas', '*' + fieldname + '*final_selection.txt' )
     try:
         fnames['canvas'] = glob.glob( f_canvas )[0]
     except:
         fnames['canvas'] = None
-        print 'Warning: '+fieldname+': Txt files "canvas" do not exist in '+f_canvas
-
-
-#    if fnames['nights'] is None and fnames['bls'] is None and fnames['sysrem'] is None:
-#        print 'Warning: None of the given fits files exist.'
+        warnings.warn( str(fieldname)+': Txt files "canvas" do not exist in '+str(f_canvas) )
 
 
     return fnames
@@ -328,7 +328,7 @@ def check_files(fnames):
         for i,fnames_key in enumerate(['nights','sysrem','bls','canvas']):
             if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
                 fnames[fnames_key] = None
-                print "Warning: fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'."
+                warnings.warn("fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'.")
         return True
 
     else:
@@ -370,8 +370,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             if not isinstance(obj_ids[0], str):
                 obj_ids = map(int, obj_ids)
                 if not all(x>0 for x in obj_ids):
-                    warning = '"obj_id" data type not understood.'
-                    sys.exit(warning)
+                    error = '"obj_id" data type not understood.'
+                    sys.exit(error)
                 obj_ids = map(str, obj_ids)
             # give all strings 6 digits
             obj_ids = objid_6digit(obj_ids)
@@ -417,7 +417,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
                     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
 
                 else:
-                    print 'Warning: BLS files not found or could not be loaded.'
+                    warnings.warn('BLS files not found or could not be loaded.')
                     obj_ids = ['bls']
 
             #d3) the command 'canvas' which reads out all 'canvas' candidates
@@ -426,7 +426,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
                     canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
                     obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )
                 else:
-                    print 'Warning: CANVAS files not found or could not be loaded.'
+                    warnings.warn('CANVAS files not found or could not be loaded.')
                     obj_ids = ['canvas']
 
             else:
@@ -448,8 +448,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
 
         # problems:
         else:
-            warning = '"obj_id" data type not understood.'
-            sys.exit(warning)
+            error = '"obj_id" data type not understood.'
+            sys.exit(error)
 
 
     #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -469,7 +469,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
                 if 0 in ind_objs:
-                    print 'Warning: "indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.'
+                    warnings.warn('"indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.')
                     indexing = 'python'
                 else:
                     ind_objs = [x-1 for x in ind_objs]
@@ -493,7 +493,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
                 if 0 in ind_objs:
-                    print 'Warning: "indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.'
+                    warnings.warn('"indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.')
                     indexing = 'python'
                 else:
                     ind_objs = [x-1 for x in ind_objs]
@@ -507,7 +507,7 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
             # count from 0 (python) or from 1 (fits)?
             if (indexing=='fits'):
                 if 0 in ind_objs:
-                    print 'Warning: "indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.'
+                    warnings.warn('"indexing" was set to "fits" (starts counting from 1) but "obj_rows" contained 0. "indexing" is now automatically set to "python" to avoid errors.')
                     indexing = 'python'
                 else:
                     ind_objs = [x-1 for x in ind_objs]
@@ -518,8 +518,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
         # problems:
         else:
 #            print '--- Warning: "obj_row" data type not understood. ---'
-            warning = '"obj_row" data type not understood.'
-            sys.exit(warning)
+            error = '"obj_row" data type not understood.'
+            sys.exit(error)
 
 
 
@@ -527,9 +527,8 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
     #::: if obj_id and obj_row are both given
     #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     else:
-#        print '--- Warning: Only use either "obj_id" or "obj_row". ---'
-        warning = 'Only use either "obj_id" or "obj_row".'
-        sys.exit(warning)
+        error = 'Only use either "obj_id" or "obj_row".'
+        sys.exit(error)
 
 
 
@@ -587,8 +586,7 @@ def get_indobjs_from_objids(fnames, obj_list, fitsreader):
     #::: check if all obj_ids were read out
     for obj_id in obj_list:
         if obj_id not in obj_ids_all[ind_objs]:
-            warning = ' --- Warning: obj_id '+str(obj_id)+' not found in fits file. --- '
-            print warning
+            warnings.warn('obj_id '+str(obj_id)+' not found in fits file.')
 
     #::: truncate the list of obj_ids, remove obj_ids that are not in fits files
     obj_ids = obj_ids_all[ind_objs]
@@ -637,7 +635,7 @@ def objid_6digit(obj_list):
 # Time Input Formatting
 ###############################################################################
 
-def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader):
+def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader, silent):
 
     if time_index is None and time_date is None and time_hjd is None and time_actionid is None:
         ind_time = slice(None)
@@ -685,10 +683,10 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
             elif len(time_date[0]) == 10:
                 time_date = [ x.replace('/','-') for x in time_date ]
             elif len(time_date[0]) > 10:
-                warning = '"time_date" format not understood.'
-                sys.exit(warning)
+                error = '"time_date" format not understood.'
+                sys.exit(error)
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader, silent)
 
         # c) test if int/float
         elif isinstance(time_date, (int, float)):
@@ -697,7 +695,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
             # format
             time_date = time_date[0:4]+'-'+time_date[4:6]+'-'+time_date[6:]
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader, silent)
 
         # d) test if str
         elif isinstance(time_date, str):
@@ -718,7 +716,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
                 sys.exit('Invalid format of value "time_date". Use e.g. 20151104, "20151104", "2015-11-04" or a textfile name like "dates.txt".')
 
             # connect to ind_time
-            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader)
+            ind_time = get_indtime_from_timedate(fnames, time_date, fitsreader, silent)
 
 
 
@@ -739,12 +737,12 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
             if isinstance(time_hjd[0], (str,float)):
                 time_hjd = map(int, time_hjd)
             # connect obj_ids to ind_objs
-            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader)
+            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader, silent)
 
        # b) test if str/int/float
         if isinstance(time_hjd, (str, int, float)):
             time_hjd = int(time_hjd)
-            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader)
+            ind_time = get_indtime_from_timehjd(fnames, time_hjd, fitsreader, silent)
 
 
 
@@ -786,8 +784,8 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
             ind_time = get_indtime_from_timeactionid(fnames, time_actionid, fitsreader)
 
     else:
-        warning = 'Only use either "time_index" or "time_date" or "time_hjd" or "time_actionid".'
-        sys.exit(warning)
+        error = 'Only use either "time_index" or "time_date" or "time_hjd" or "time_actionid".'
+        sys.exit(error)
 
     return ind_time
 
@@ -817,8 +815,7 @@ def get_indtime_from_timedate(fnames, time_date, fitsreader):
     #::: check if all dates were found in fits file
     for date in time_date:
         if date not in time_date_all[ind_time]:
-            warning = 'Date '+ date +' not found in fits file.'
-            print warning
+            warnings.warn('Date '+ date +' not found in fits file.')
 
     #::: clean up
     del time_date_all
@@ -828,7 +825,7 @@ def get_indtime_from_timedate(fnames, time_date, fitsreader):
 
 
 
-def get_indtime_from_timehjd(fnames, time_hjd, fitsreader):
+def get_indtime_from_timehjd(fnames, time_hjd, fitsreader, silent):
 
     # if not list, make list
     if not isinstance(time_hjd, (tuple, list, np.ndarray)):
@@ -852,8 +849,7 @@ def get_indtime_from_timehjd(fnames, time_hjd, fitsreader):
     #::: check if all dates were found in fits file
     for hjd in time_hjd:
         if hjd not in time_hjd_all[ind_time]:
-            warning = 'Date-HJD '+ str(hjd) +' not found in fits file.'
-            print warning
+            warnings.warn('Date-HJD '+ str(hjd) +' not found in fits file.')
 
     #::: clean up
     del time_hjd_all
@@ -886,10 +882,7 @@ def get_indtime_from_timeactionid(fnames, time_actionid, fitsreader):
 
     for actionid in time_actionid:
         if actionid not in time_actionid_all[ind_time]:
-            warning = 'Action-ID '+ str(actionid) +' not found in fits file.'
-            print warning
-#                sys.exit(warning)
-            #TODO raise proper warning/error
+            warnings.warn('Action-ID '+ str(actionid) +' not found in fits file.')
 
     del time_actionid_all
 
@@ -982,11 +975,11 @@ def get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader):
 
     #::: check ind_objs
     if not isinstance(ind_objs, slice) and len(ind_objs) == 0:
-        print ' --- Warning: None of the given objects found in the fits files. Return empty dictionary. --- '
+        warnings.warn('None of the given objects found in the fits files. Return empty dictionary.')
         dic = {}
 
     elif not isinstance(ind_time, slice) and len(ind_time) == 0:
-        print ' --- Warning: None of the given times found in the fits files. Return empty dictionary. --- '
+        warnings.warn('None of the given objects found in the fits files. Return empty dictionary.')
         dic = {}
 
     else:
@@ -1472,7 +1465,6 @@ def get_canvas_data( fnames, keys, dic ):
 def simplify_dic(dic):
 
     for key, value in dic.iteritems():
-        print key, value
         if value.shape[0] == 1:
             dic[key] = value[0]
         elif (len(value.shape) > 1) and (value.shape[1] == 1):
@@ -1553,10 +1545,10 @@ def check_dic(dic, keys, silent):
 ###############################################################################
 if __name__ == '__main__':
     pass
-##    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
-##    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
+#    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='astropy', time_index=range(1000))
-#    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_row=10, set_nan=True, fitsreader='fitsio', time_index=range(1000))
+    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_row=10, set_nan=True, fitsreader='fitsio', time_index=range(1000))
 #    print dic
 ##    dic2 = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='fitsio', time_index=range(1000))
 #
