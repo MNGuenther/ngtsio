@@ -18,7 +18,7 @@ import os, sys, glob, socket, collections, datetime
 import numpy as np
 
 def warning_on_one_line(message, category, filename, lineno, file=None, line=''):
-    return '\n%s: %s, line %s\n\t %s\n' % (category.__name__, filename, lineno, message)
+    return '\n%s: %s, line %s\n\t %s\n\n' % (category.__name__, filename, lineno, message)
 warnings.formatwarning = warning_on_one_line
 
 
@@ -849,7 +849,11 @@ def get_indtime_from_timehjd(fnames, time_hjd, fitsreader, silent):
     #::: check if all dates were found in fits file
     for hjd in time_hjd:
         if hjd not in time_hjd_all[ind_time]:
-            warnings.warn('Date-HJD '+ str(hjd) +' not found in fits file.')
+            if silent is False:
+                warnings.warn('Date-HJD '+ str(hjd) +' not found in fits file.')
+            else:
+                warnings.warn('One ore more Date-HJDs not found in fits file.')
+                break
 
     #::: clean up
     del time_hjd_all
