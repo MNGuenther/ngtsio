@@ -378,7 +378,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
             fnames['nights'] = None
             warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
         
-        f_bls = os.path.join( roots['nights'], '*'+fieldname+'*.fits' )
+        f_bls = os.path.join( roots['bls'], '*'+fieldname+'*.fits' )
         try:
             fnames['bls'] = glob.glob( f_bls )[0]
         except:
