@@ -1803,7 +1803,7 @@ def check_dic(dic, keys, silent):
 # MAIN
 ###############################################################################
 if __name__ == '__main__':
-#    pass
+    pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='astropy', time_index=range(1000))
@@ -1830,8 +1830,8 @@ if __name__ == '__main__':
 ##    print dic
 ##        print dic['FLUX']        
         
-    dic = get( 'NG0524-3056', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX','FLUX3'], obj_id=['019164', '022551'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
-    for key in dic:
-        print '------------'
-        print key
-        print dic[key]
+#    dic = get( 'NG0524-3056', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX','FLUX3'], obj_id=['019164', '022551'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
+#    for key in dic:
+#        print '------------'
+#        print key
+#        print dic[key]
