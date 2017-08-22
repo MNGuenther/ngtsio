@@ -206,9 +206,11 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         if set_nan == True:
             dic = set_nan_dic(dic)
 
-        #::: remove FLUX and FLAGS if it was only needed for computing things
+        #::: remove entries that were only needed for readout / computing things
         if ('FLUX' in dic.keys()) and ('FLUX' not in keys_0): del dic['FLUX']
         if ('FLAGS' in dic.keys()) and ('FLAGS' not in keys_0): del dic['FLAGS']
+        if ('FLUX3_ERR' in dic.keys()) and ('FLUX3_ERR' not in keys_0): del dic['FLUX3_ERR']
+        if ('SYSREM_FLUX3' in dic.keys()) and ('SYSREM_FLUX3' not in keys_0): del dic['SYSREM_FLUX3']
 
         #::: simplify output if only for 1 object
         if simplify==True: 
