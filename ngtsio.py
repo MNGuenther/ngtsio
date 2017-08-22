@@ -167,6 +167,11 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
         if ngts_version in ('TEST16A','TEST18'):
             if ('SYSREM_FLUX3' in keys) and ('FLUX' not in keys):
                 keys.append('FLUX')
+                
+        #::: transfer 'FLUX' into 'FLUX3' for >= CYCLE1706
+        if ngts_version in ('CYCLE1706'):
+            if ('FLUX' in keys) and ('FLUX3' not in keys):
+                keys.append('FLUX3')
 
         #::: objects
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
@@ -183,6 +188,13 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
             if 'SYSREM_FLUX3' in keys:
                 if 'FLUX' in dic.keys():
                     dic['SYSREM_FLUX3'] = dic['FLUX']
+                    
+        #::: transfer 'FLUX3' into 'FLUX' for >= CYCLE1706
+        if ngts_version in ('CYCLE1706'):
+            if 'FLUX3' in keys:
+                if 'FLUX' in dic.keys():
+                    dic['FLUX'] = 1.*dic['FLUX3']
+                    del dic['FLUX3']
 
         #::: set flagged values and flux==0 values to nan
         if set_nan == True:
@@ -1809,3 +1821,4 @@ if __name__ == '__main__':
 ##        print dic['FLUX']
 
     dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX'], obj_id=['018898', '005613'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
+    print dic
