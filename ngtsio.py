@@ -1820,8 +1820,8 @@ if __name__ == '__main__':
 ##    print dic
 ##        print dic['FLUX']        
         
-    dic = get( 'NG0524-3056', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX'], obj_id=['019164', '022551'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
-    for key in dic:
-        print '------------'
-        print key
-        print dic[key]
+#    dic = get( 'NG0524-3056', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX'], obj_id=['019164', '022551'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
+#    for key in dic:
+#        print '------------'
+#        print key
+#        print dic[key]
