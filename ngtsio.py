@@ -347,9 +347,9 @@ def standard_fnames(fieldname, ngts_version, root, roots):
 #                root = glob.glob('/ngts/prodstore/*/MergePipe*NG0613*')[-1]
     
                 roots = {}
-                roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*NG0613*')[-1]
+                roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*'+fieldname+'*')[-1]
                 roots['sysrem'] = ''
-                roots['bls'] = glob.glob('/ngts/prodstore/*/BLSPipe*NG0613*')[-1]
+                roots['bls'] = glob.glob('/ngts/prodstore/*/BLSPipe*'+fieldname+'*')[-1]
                 roots['dilution'] = ''
                 roots['canvas'] = ''
     
@@ -399,6 +399,8 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         fnames['CENTDY_ERR']    = [x for x in fnames['nights'] if 'CENTDY_ERR.fits' in x][0]
         fnames['CENTDY']        = [x for x in fnames['nights'] if 'CENTDY.fits' in x][0]
         fnames['FLAGS']         = [x for x in fnames['nights'] if 'FLAGS.fits' in x][0]
+        fnames['FLUX_ERR']      = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0] #FLUX = FLUX3
+        fnames['FLUX']          = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]     #FLUX = FLUX3
         fnames['FLUX3_ERR']     = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0]
         fnames['FLUX3']         = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]
         fnames['FLUX4_ERR']     = [x for x in fnames['nights'] if 'FLUX4_ERR.fits' in x][0]
@@ -1794,6 +1796,7 @@ if __name__ == '__main__':
 #
 ##    for i in range(len(dic['OBJ_ID'])):
 ##        print dic['OBJ_ID'][i], '\t', dic['PERIOD'][i]/3600./24., 'd\t', dic['CANVAS_PERIOD'][i]/3600./24., 'd\t', dic['WIDTH'][i]/3600., 'h\t', dic['CANVAS_WIDTH'][i]/3600., 'h\t'
+
 ##    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_id=['018898', '005613']) #, fitsreader='fitsio', time_index=range(100000))
 #
 #    for key in dic:
@@ -1804,3 +1807,5 @@ if __name__ == '__main__':
 ##        print '------------'
 ##    print dic
 ##        print dic['FLUX']
+
+#    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','DATE-OBS','PERIOD','FLUX'], obj_id=['018898', '005613'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
