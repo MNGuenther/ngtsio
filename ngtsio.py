@@ -417,7 +417,7 @@ def standard_fnames(fieldname, ngts_version, root, roots):
 
 
 
-def check_files(fnames, ngts_version):
+def check_files(fnames):
     return True
 
 #    if fnames['nights'] is None:
