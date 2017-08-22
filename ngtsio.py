@@ -218,121 +218,221 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 
 def standard_fnames(fieldname, ngts_version, root, roots):
 
-    valid_fields = [ 'TEST10', 'TEST16', 'TEST16A', 'TEST18' ]
+    old_versions = [ 'TEST10', 'TEST16', 'TEST16A', 'TEST18' ]
+    new_versions = [ 'CYCLE1706' ]
+    valid_versions = old_versions + new_versions
+    
+    
+    if ngts_version in old_versions:
 
-    if (root is None) and (roots is None):
-
-        #::: on laptop (OS X)
-        if sys.platform == "darwin":
-        #    from fitsiochunked import ChunkedAdapter
-            if ngts_version in valid_fields:
-                root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
-            else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-#	    root_dil = root
-
-        #::: on Cambridge servers
-        elif 'ra.phy.cam.ac.uk' in socket.gethostname():
-            if ngts_version in valid_fields:
-                root = '/appch/data/mg719/ngts_pipeline_output/'
-            else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-#            root_dil = root
-
-        #::: on ngtshead (LINUX)
-        elif 'ngts' in socket.gethostname():
-            if ngts_version in [ 'TEST10', 'TEST16' ]:
-                root = '/ngts/pipeline/output/'
-            elif ngts_version in [ 'TEST16A', 'TEST18' ]:
-                root = '/home/maxg/ngts_pipeline_output/'
-    #        elif ngts_version == 'TEST13':
-    #            root = '/home/philipp/TEST13/'
-            else:
-                sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_fields))
-#            root_dil = '/home/maxg/ngts_pipeline_output/'
-
-        roots = {}
-        roots['nights'] = root
-        roots['sysrem'] = root
-        roots['bls'] = root
-        roots['dilution'] = root
-        roots['canvas'] = root
-
-
-    #root will overwrite individual roots
-    elif root is not None:
-
-        roots = {}
-        roots['nights'] = root
-        roots['sysrem'] = root
-        roots['bls'] = root
-        roots['dilution'] = root
-        roots['canvas'] = root
-
-
-    #otherwise roots has been given (try-except will catch the None or non-existing entries)
-    else:
-        pass
-
-
-    fnames = {}
-    f_nights = os.path.join( roots['nights'], ngts_version, fieldname+'*.fits' )
-    try:
-        fnames['nights'] = glob.glob( f_nights )[0]
-    except:
-        fnames['nights'] = None
-        warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
-
-    if (ngts_version=='TEST10') or (ngts_version=='TEST16'): #TEST16A contains the sysrem files as normal flux
-	f_sysrem = os.path.join( roots['sysrem'], ngts_version, 'sysrem', '*' + fieldname + '*', '*' + fieldname + '*_FLUX3.fits' )
+        if (root is None) and (roots is None):
+    
+            #::: on laptop (OS X)
+            if sys.platform == "darwin":
+            #    from fitsiochunked import ChunkedAdapter
+                if ngts_version in valid_versions:
+                    root = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/'
+                else:
+                    sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_versions))
+    #	    root_dil = root
+    
+            #::: on Cambridge servers
+            elif 'ra.phy.cam.ac.uk' in socket.gethostname():
+                if ngts_version in valid_versions:
+                    root = '/appch/data/mg719/ngts_pipeline_output/'
+                else:
+                    sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_versions))
+    #            root_dil = root
+    
+            #::: on ngtshead (LINUX)
+            elif 'ngts' in socket.gethostname():
+                if ngts_version in [ 'TEST10', 'TEST16' ]:
+                    root = '/ngts/pipeline/output/'
+                elif ngts_version in [ 'TEST16A', 'TEST18' ]:
+                    root = '/home/maxg/ngts_pipeline_output/'
+        #        elif ngts_version == 'TEST13':
+        #            root = '/home/philipp/TEST13/'
+                else:
+                    sys.exit('Invalid value for "ngts_version". Valid entries are: ' + ', '.join(valid_versions))
+    #            root_dil = '/home/maxg/ngts_pipeline_output/'
+    
+            roots = {}
+            roots['nights'] = root
+            roots['sysrem'] = root
+            roots['bls'] = root
+            roots['dilution'] = root
+            roots['canvas'] = root
+    
+    
+        #root will overwrite individual roots
+        elif root is not None:
+    
+            roots = {}
+            roots['nights'] = root
+            roots['sysrem'] = root
+            roots['bls'] = root
+            roots['dilution'] = root
+            roots['canvas'] = root
+    
+    
+        #otherwise roots has been given (try-except will catch the None or non-existing entries)
+        else:
+            pass
+    
+    
+        fnames = {}
+        f_nights = os.path.join( roots['nights'], ngts_version, fieldname+'*.fits' )
         try:
-            fnames['sysrem'] = glob.glob( f_sysrem )[0]
+            fnames['nights'] = glob.glob( f_nights )[0]
         except:
+            fnames['nights'] = None
+            warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
+    
+        if (ngts_version=='TEST10') or (ngts_version=='TEST16'): #TEST16A contains the sysrem files as normal flux
+            f_sysrem = os.path.join( roots['sysrem'], ngts_version, 'sysrem', '*' + fieldname + '*', '*' + fieldname + '*_FLUX3.fits' )
+            try:
+                fnames['sysrem'] = glob.glob( f_sysrem )[0]
+            except:
+                fnames['sysrem'] = None
+                warnings.warn( str(fieldname)+': Fits files "sysrem" do not exist in '+str(f_sysrem) )
+        else:
             fnames['sysrem'] = None
-            warnings.warn( str(fieldname)+': Fits files "sysrem" do not exist in '+str(f_sysrem) )
-    else:
+    
+        f_bls = os.path.join( roots['bls'], ngts_version, 'bls', '*' + fieldname + '*')
+        try:
+            fnames['bls'] = glob.glob( f_bls )[0]
+        except:
+            fnames['bls'] = None
+            warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
+    
+        f_dil = os.path.join( roots['dilution'], ngts_version, 'DILUTION', 'dilution*' + fieldname + '*.fits')
+        try:
+            fnames['dilution'] = glob.glob( f_dil )[0]
+        except:
+            fnames['dilution'] = None
+            warnings.warn( str(fieldname)+': Fits files "dilution" do not exist in '+str(f_dil) )
+    
+        f_canvas = os.path.join( roots['canvas'], ngts_version, 'canvas', '*' + fieldname + '*final_selection.txt' )
+        try:
+            fnames['canvas'] = glob.glob( f_canvas )[0]
+        except:
+            fnames['canvas'] = None
+            warnings.warn( str(fieldname)+': Txt files "canvas" do not exist in '+str(f_canvas) )
+    
+    
+        #hack to be upward compatible to new ngts_versions
+        fnames['CATALOGUE'] = fnames['nights']
+        fnames['IMAGELIST'] = fnames['nights']
+        
+        
+        
+        return fnames
+
+
+
+
+
+    if ngts_version in new_versions:
+
+        if (root is None) and (roots is None):
+    
+            #::: on laptop (OS X)
+            #TODO:
+    
+            #::: on Cambridge servers
+            #TODO:
+    
+            #::: on ngtshead (LINUX)
+            if 'ngts' in socket.gethostname():
+#                root = glob.glob('/ngts/prodstore/*/MergePipe*NG0613*')[-1]
+    
+                roots = {}
+                roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*NG0613*')[-1]
+                roots['sysrem'] = ''
+                roots['bls'] = glob.glob('/ngts/prodstore/*/BLSPipe*NG0613*')[-1]
+                roots['dilution'] = ''
+                roots['canvas'] = ''
+    
+    
+        #root will overwrite individual roots
+        elif root is not None:
+    
+            roots = {}
+            roots['nights'] = root
+            roots['sysrem'] = root
+            roots['bls'] = root
+            roots['dilution'] = root
+            roots['canvas'] = root
+    
+    
+        #otherwise roots has been given (try-except will catch the None or non-existing entries)
+        else:
+            pass
+    
+    
+        fnames = {}
+        f_nights = os.path.join( roots['nights'], '*'+fieldname+'*.fits' )
+        try:
+            fnames['nights'] = glob.glob( f_nights ) #this is now a list of all single files (e.g. FLAGS, FLUX3, FLUX3_ERR, CCDX etc.)
+        except:
+            fnames['nights'] = None
+            warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
+        
+        f_bls = os.path.join( roots['nights'], '*'+fieldname+'*.fits' )
+        try:
+            fnames['bls'] = glob.glob( f_bls )[0]
+        except:
+            fnames['bls'] = None
+            warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
+    
+        #TODO:
         fnames['sysrem'] = None
-
-    f_bls = os.path.join( roots['bls'], ngts_version, 'bls', '*' + fieldname + '*')
-    try:
-        fnames['bls'] = glob.glob( f_bls )[0]
-    except:
-        fnames['bls'] = None
-        warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
-
-    f_dil = os.path.join( roots['dilution'], ngts_version, 'DILUTION', 'dilution*' + fieldname + '*.fits')
-    try:
-        fnames['dilution'] = glob.glob( f_dil )[0]
-    except:
         fnames['dilution'] = None
-        warnings.warn( str(fieldname)+': Fits files "dilution" do not exist in '+str(f_dil) )
-
-    f_canvas = os.path.join( roots['canvas'], ngts_version, 'canvas', '*' + fieldname + '*final_selection.txt' )
-    try:
-        fnames['canvas'] = glob.glob( f_canvas )[0]
-    except:
         fnames['canvas'] = None
-        warnings.warn( str(fieldname)+': Txt files "canvas" do not exist in '+str(f_canvas) )
+        
+        
+        fnames['CATALOGUE']     = [x for x in fnames['nights'] if 'CATALOGUE.fits' in x][0]
+        fnames['CCDX']          = [x for x in fnames['nights'] if 'CCDX.fits' in x][0]
+        fnames['CCDY']          = [x for x in fnames['nights'] if 'CCDY.fits' in x][0]
+        fnames['CENTDX_ERR']    = [x for x in fnames['nights'] if 'CENTDX_ERR.fits' in x][0]
+        fnames['CENTDX']        = [x for x in fnames['nights'] if 'CENTDX.fits' in x][0]
+        fnames['CENTDY_ERR']    = [x for x in fnames['nights'] if 'CENTDY_ERR.fits' in x][0]
+        fnames['CENTDY']        = [x for x in fnames['nights'] if 'CENTDY.fits' in x][0]
+        fnames['FLAGS']         = [x for x in fnames['nights'] if 'FLAGS.fits' in x][0]
+        fnames['FLUX3_ERR']     = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0]
+        fnames['FLUX3']         = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]
+        fnames['FLUX4_ERR']     = [x for x in fnames['nights'] if 'FLUX4_ERR.fits' in x][0]
+        fnames['FLUX4']         = [x for x in fnames['nights'] if 'FLUX4.fits' in x][0]
+        fnames['FLUX5_ERR']     = [x for x in fnames['nights'] if 'FLUX5_ERR.fits' in x][0]
+        fnames['FLUX5']         = [x for x in fnames['nights'] if 'FLUX5.fits' in x][0]
+        fnames['HJD']           = [x for x in fnames['nights'] if 'HJD.fits' in x][0]
+        fnames['IMAGELIST']     = [x for x in fnames['nights'] if 'IMAGELIST.fits' in x][0]
+        fnames['SKYBKG']        = [x for x in fnames['nights'] if 'SKYBKG.fits' in x][0]
+        fnames['SUB_PROD_LIST'] = [x for x in fnames['nights'] if 'SUB_PROD_LIST.fits' in x][0]
+    
+    
+        return fnames
 
 
-    return fnames
 
 
 
-def check_files(fnames):
+def check_files(fnames, ngts_version):
+    return True
 
-    if fnames['nights'] is None:
-        return False
+#    if fnames['nights'] is None:
+#        return False
+#
+#    elif fnames is not None:
+#        for i,fnames_key in enumerate(['nights','sysrem','bls','canvas']):
+#            if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
+#                fnames[fnames_key] = None
+#                warnings.warn("fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'.")
+#        return True
+#
+#    else:
+#        return False
 
-    elif fnames is not None:
-        for i,fnames_key in enumerate(['nights','sysrem','bls','canvas']):
-            if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
-                fnames[fnames_key] = None
-                warnings.warn("fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'.")
-        return True
-
-    else:
-        return False
 
 
 
@@ -571,12 +671,12 @@ def get_obj_inds(fnames, obj_ids, obj_rows, indexing,fitsreader, obj_sortby = 'o
 def get_indobjs_from_objids(fnames, obj_list, fitsreader):
 
     if fitsreader=='astropy' or fitsreader=='pyfits':
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+        with pyfits.open(fnames['CATALOGUE'], mode='denywrite') as hdulist:
             obj_ids_all = hdulist['CATALOGUE'].data['OBJ_ID'].strip()
             del hdulist['CATALOGUE'].data
 
     elif fitsreader=='fitsio' or fitsreader=='cfitsio':
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+        with fitsio.FITS(fnames['CATALOGUE'], vstorage='object') as hdulist:
             obj_ids_all = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') )#indices of the candidates
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
@@ -599,12 +699,12 @@ def get_indobjs_from_objids(fnames, obj_list, fitsreader):
 def get_objids_from_indobjs(fnames, ind_objs, fitsreader):
 
     if fitsreader=='astropy' or fitsreader=='pyfits':
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+        with pyfits.open(fnames['CATALOGUE'], mode='denywrite') as hdulist:
             obj_ids = hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
             del hdulist['CATALOGUE'].data
 
     elif fitsreader=='fitsio' or fitsreader=='cfitsio':
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+        with fitsio.FITS(fnames['CATALOGUE'], vstorage='object') as hdulist:
             if isinstance(ind_objs, slice): obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID') ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
             else: obj_ids = np.char.strip( hdulist['CATALOGUE'].read(columns='OBJ_ID', rows=ind_objs) ) #copy.deepcopy( hdulist['CATALOGUE'].data['OBJ_ID'][ind_objs].strip() )
 
@@ -792,6 +892,7 @@ def get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsre
 
 
 def get_indtime_from_timedate(fnames, time_date, fitsreader):
+    
 
     # if not list, make list
     if not isinstance(time_date, (tuple, list, np.ndarray)):
@@ -799,12 +900,12 @@ def get_indtime_from_timedate(fnames, time_date, fitsreader):
 
 
     if fitsreader=='astropy' or fitsreader=='pyfits':
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+        with pyfits.open(fnames['IMAGELIST'], mode='denywrite') as hdulist:
             time_date_all = hdulist['IMAGELIST'].data['DATE-OBS'].strip()
             del hdulist['IMAGELIST'].data
 
     elif fitsreader=='fitsio' or fitsreader=='cfitsio':
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+        with fitsio.FITS(fnames['IMAGELIST'], vstorage='object') as hdulist:
             time_date_all = np.char.strip( hdulist['IMAGELIST'].read(columns='DATE-OBS') )
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
@@ -826,19 +927,19 @@ def get_indtime_from_timedate(fnames, time_date, fitsreader):
 
 
 def get_indtime_from_timehjd(fnames, time_hjd, fitsreader, silent):
-
+    
     # if not list, make list
     if not isinstance(time_hjd, (tuple, list, np.ndarray)):
         time_hjd = [time_hjd]
 
 
     if fitsreader=='astropy' or fitsreader=='pyfits':
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+        with pyfits.open(fnames['IMAGELIST'], mode='denywrite') as hdulist:
             time_hjd_all = np.int64( hdulist['HJD'].data[0]/3600./24. )
             del hdulist['IMAGELIST'].data
 
     elif fitsreader=='fitsio' or fitsreader=='cfitsio':
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+        with fitsio.FITS(fnames['IMAGELIST'], vstorage='object') as hdulist:
             time_hjd_all = np.int64( hdulist['HJD'][0,:]/3600./24. )[0]
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
@@ -871,12 +972,12 @@ def get_indtime_from_timeactionid(fnames, time_actionid, fitsreader):
 
 
     if fitsreader=='astropy' or fitsreader=='pyfits':
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+        with pyfits.open(fnames['IMAGELIST'], mode='denywrite') as hdulist:
             time_actionid_all = hdulist['IMAGELIST'].data['ACTIONID']
             del hdulist['IMAGELIST'].data
 
     elif fitsreader=='fitsio' or fitsreader=='cfitsio':
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+        with fitsio.FITS(fnames['IMAGELIST'], vstorage='object') as hdulist:
             time_actionid_all = hdulist['IMAGELIST'].read(columns='ACTIONID')
 
     else: sys.exit('"fitsreader" can only be "astropy"/"pyfits" or "fitsio"/"cfitsio".')
@@ -1037,35 +1138,72 @@ def pyfits_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
 
     #, memmap=True, do_not_scale_image_data=True
     if fnames['nights'] is not None:
-        with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
-
+        
+        
+        #old ngts_versions (a single megafile):
+        if isinstance(fnames['nights'], basestring):
+            
+            with pyfits.open(fnames['nights'], mode='denywrite') as hdulist:
+    
+                #::: CATALOGUE
+                hdukey = 'CATALOGUE'
+                hdu = hdulist[hdukey].data
+                for key in np.intersect1d(hdu.names, keys):
+                    dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
+                del hdu, hdulist[hdukey].data
+    
+                #::: IMAGELIST
+                hdukey = 'IMAGELIST'
+                hdu = hdulist[hdukey].data
+                for key in np.intersect1d(hdu.names, keys):
+                    dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
+                del hdu, hdulist[hdukey].data
+    
+                #::: DATA HDUs
+                for _, hdukeyinfo in enumerate(hdulist.info(output=False)):
+                    hdukey = hdukeyinfo[1]
+                    if hdukey in keys:
+                        key = hdukey
+                        dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
+                        if key in ['CCDX','CCDY']:
+                            dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                        if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                            dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                        del hdulist[key].data
+    
+                del hdulist
+                
+               
+        #new ngts_versions (individual files): 
+        else:       
+                
             #::: CATALOGUE
-            hdukey = 'CATALOGUE'
-            hdu = hdulist[hdukey].data
-            for key in np.intersect1d(hdu.names, keys):
-                dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
-            del hdu, hdulist[hdukey].data
-
+            with pyfits.open(fnames['CATALOGUE'], mode='denywrite') as hdulist:
+                hdukey = 'CATALOGUE'
+                hdu = hdulist[hdukey].data
+                for key in np.intersect1d(hdu.names, keys):
+                    dic[key] = hdu[key][ind_objs] #copy.deepcopy( hdu[key][ind_objs] )
+                del hdu, hdulist[hdukey].data, hdulist
+    
             #::: IMAGELIST
-            hdukey = 'IMAGELIST'
-            hdu = hdulist[hdukey].data
-            for key in np.intersect1d(hdu.names, keys):
-                dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
-            del hdu, hdulist[hdukey].data
+            with pyfits.open(fnames['IMAGELIST'], mode='denywrite') as hdulist:
+                hdukey = 'IMAGELIST'
+                hdu = hdulist[hdukey].data
+                for key in np.intersect1d(hdu.names, keys):
+                    dic[key] = hdu[key][ind_time] #copy.deepcopy( hdu[key][ind_time] )
+                del hdu, hdulist[hdukey].data, hdulist
 
             #::: DATA HDUs
-            for _, hdukeyinfo in enumerate(hdulist.info(output=False)):
-                hdukey = hdukeyinfo[1]
-                if hdukey in keys:
-                    key = hdukey
-                    dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
-                    if key in ['CCDX','CCDY']:
-                        dic[key] = (dic[key] + CCD_bzero) / CCD_precision
-                    if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
-                        dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
-                    del hdulist[key].data
-
-            del hdulist
+            for key in keys:
+                if key in fnames:
+                    with pyfits.open(fnames[key], mode='denywrite') as hdulist:
+                        dic[key] = hdulist[key].data[ind_objs][:,ind_time] #copy.deepcopy( hdulist[key].data[ind_objs][:,ind_time] )
+                        if key in ['CCDX','CCDY']:
+                            dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                        if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                            dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                        del hdulist[key].data, hdulist
+        
 
 
 
@@ -1181,80 +1319,173 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
 
     ##################### fnames['nights'] #####################
     if ('nights' in fnames) and (fnames['nights'] is not None):
-        with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
-
-            #::: fitsio does not work with slice arguments, convert to list
-            allobjects = False
-            if isinstance (ind_objs, slice):
-                N_objs = int( hdulist['CATALOGUE'].get_nrows() )
-                ind_objs = range(N_objs)
-                allobjects = True
-
-            if isinstance (ind_time, slice):
-                N_time = int( hdulist['IMAGELIST'].get_nrows() )
-                ind_time = range(N_time)
-
-
-            #::: CATALOGUE
-            hdukey = 'CATALOGUE'
-            hdunames = hdulist[hdukey].get_colnames()
-            subkeys = np.intersect1d(hdunames, keys)
-            if subkeys.size!=0:
-                data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
-                if isinstance(subkeys, str): subkeys = [subkeys]
-                for key in subkeys:
-                    dic[key] = data[key] #copy.deepcopy( data[key] )
-                del data
-
-            #::: IMAGELIST
-            hdukey = 'IMAGELIST'
-            hdunames = hdulist[hdukey].get_colnames()
-            subkeys = np.intersect1d(hdunames, keys)
-            if subkeys.size!=0:
-                data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
-                if isinstance(subkeys, str): subkeys = [subkeys]
-                for key in subkeys:
-                    dic[key] = data[key] #copy.deepcopy( data[key] )
-                del data
-
-            # TODO: very inefficient - reads out entire image first, then cuts
-            # TODO: can only give ind_time in a slice, not just respective dates
-            #::: DATA HDUs
-            j = 0
-            while j!=-1:
-                try:
-                    hdukey = hdulist[j].get_extname()
-                    if hdukey in keys:
-                        key = hdukey
-
-                        #::: read out individual objects (more memory efficient)
-                        if allobjects == False:
-                            dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
-                            for i, ind_singleobj in enumerate(ind_objs):
-                                buf = hdulist[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
-                                #::: select the wished times only (if some times within the slice are not wished for)
+        
+        
+        ###################### old ngts_versions (a single megafile) #####################
+        if isinstance(fnames['nights'], basestring):
+            
+            with fitsio.FITS(fnames['nights'], vstorage='object') as hdulist:
+    
+                #::: fitsio does not work with slice arguments, convert to list
+                allobjects = False
+                if isinstance (ind_objs, slice):
+                    N_objs = int( hdulist['CATALOGUE'].get_nrows() )
+                    ind_objs = range(N_objs)
+                    allobjects = True
+    
+                if isinstance (ind_time, slice):
+                    N_time = int( hdulist['IMAGELIST'].get_nrows() )
+                    ind_time = range(N_time)
+    
+    
+                #::: CATALOGUE
+                hdukey = 'CATALOGUE'
+                hdunames = hdulist[hdukey].get_colnames()
+                subkeys = np.intersect1d(hdunames, keys)
+                if subkeys.size!=0:
+                    data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
+                    if isinstance(subkeys, str): subkeys = [subkeys]
+                    for key in subkeys:
+                        dic[key] = data[key] #copy.deepcopy( data[key] )
+                    del data
+    
+                #::: IMAGELIST
+                hdukey = 'IMAGELIST'
+                hdunames = hdulist[hdukey].get_colnames()
+                subkeys = np.intersect1d(hdunames, keys)
+                if subkeys.size!=0:
+                    data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
+                    if isinstance(subkeys, str): subkeys = [subkeys]
+                    for key in subkeys:
+                        dic[key] = data[key] #copy.deepcopy( data[key] )
+                    del data
+    
+                # TODO: very inefficient - reads out entire image first, then cuts
+                # TODO: can only give ind_time in a slice, not just respective dates
+                #::: DATA HDUs
+                j = 0
+                while j!=-1:
+                    try:
+                        hdukey = hdulist[j].get_extname()
+                        if hdukey in keys:
+                            key = hdukey
+    
+                            #::: read out individual objects (more memory efficient)
+                            if allobjects == False:
+                                dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
+                                for i, ind_singleobj in enumerate(ind_objs):
+                                    buf = hdulist[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
+                                    #::: select the wished times only (if some times within the slice are not wished for)
+                                    if buf.shape[1] != len(ind_time):
+                                        ind_timeX = [x - ind_time[0] for x in ind_time]
+                                        buf = buf[:,ind_timeX]
+                                    dic[key][i,:] = buf
+                                del buf
+    
+                            #::: read out all objects at once
+                            else:
+                                buf = hdulist[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
                                 if buf.shape[1] != len(ind_time):
                                     ind_timeX = [x - ind_time[0] for x in ind_time]
                                     buf = buf[:,ind_timeX]
-                                dic[key][i,:] = buf
-                            del buf
+                                dic[key] = buf
+                                del buf
+    
+                            if key in ['CCDX','CCDY']:
+                                dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                            if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                                dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                        j += 1
+                    except:
+                        break
+                    
+                
+                
+                
+                
+    
+        
+        ###################### new ngts_versions (individual files) #####################
+        else:
+            
+            #::: CATALOGUE
+            with fitsio.FITS(fnames['CATALOGUE'], vstorage='object') as hdulist:
+                
+                #::: fitsio does not work with slice arguments, convert to list
+                allobjects = False
+                if isinstance (ind_objs, slice):
+                    N_objs = int( hdulist['CATALOGUE'].get_nrows() )
+                    ind_objs = range(N_objs)
+                    allobjects = True
+                        
+                hdukey = 'CATALOGUE'
+                hdunames = hdulist[hdukey].get_colnames()
+                subkeys = np.intersect1d(hdunames, keys)
+                if subkeys.size!=0:
+                    data = hdulist[hdukey].read(columns=subkeys, rows=ind_objs)
+                    if isinstance(subkeys, str): subkeys = [subkeys]
+                    for key in subkeys:
+                        dic[key] = data[key] #copy.deepcopy( data[key] )
+                    del data
+            
+        
+        
+            #::: IMAGELIST
+            with fitsio.FITS(fnames['IMAGELIST'], vstorage='object') as hdulist:
+        
+                #::: fitsio does not work with slice arguments, convert to list
+                if isinstance (ind_time, slice):
+                    N_time = int( hdulist['IMAGELIST'].get_nrows() )
+                    ind_time = range(N_time)
+                        
+                hdukey = 'IMAGELIST'
+                hdunames = hdulist[hdukey].get_colnames()
+                subkeys = np.intersect1d(hdunames, keys)
+                if subkeys.size!=0:
+                    data = hdulist[hdukey].read(columns=subkeys, rows=ind_time)
+                    if isinstance(subkeys, str): subkeys = [subkeys]
+                    for key in subkeys:
+                        dic[key] = data[key] #copy.deepcopy( data[key] )
+                    del data
+            
+    
+    
+    
+            #::: DATA HDUs
+            for key in keys:
+                if key in fnames:
+                    with fitsio.FITS(fnames[key], vstorage='object') as hdulist:
+                    
+                        hdukey = hdulist[0].get_extname()
+                        if hdukey in keys:
+    
+                            #::: read out individual objects (more memory efficient)
+                            if allobjects == False:
+                                dic[key] = np.zeros(( len(ind_objs), len(ind_time) ))
+                                for i, ind_singleobj in enumerate(ind_objs):
+                                    buf = hdulist[hdukey][slice(ind_singleobj,ind_singleobj+1), slice( ind_time[0], ind_time[-1]+1)]
+                                    #::: select the wished times only (if some times within the slice are not wished for)
+                                    if buf.shape[1] != len(ind_time):
+                                        ind_timeX = [x - ind_time[0] for x in ind_time]
+                                        buf = buf[:,ind_timeX]
+                                    dic[key][i,:] = buf
+                                del buf
+    
+                            #::: read out all objects at once
+                            else:
+                                buf = hdulist[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
+                                if buf.shape[1] != len(ind_time):
+                                    ind_timeX = [x - ind_time[0] for x in ind_time]
+                                    buf = buf[:,ind_timeX]
+                                dic[key] = buf
+                                del buf
+    
+                            if key in ['CCDX','CCDY']:
+                                dic[key] = (dic[key] + CCD_bzero) / CCD_precision
+                            if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
+                                dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
+                       
 
-                        #::: read out all objects at once
-                        else:
-                            buf = hdulist[hdukey][:, slice( ind_time[0], ind_time[-1]+1)]
-                            if buf.shape[1] != len(ind_time):
-                                ind_timeX = [x - ind_time[0] for x in ind_time]
-                                buf = buf[:,ind_timeX]
-                            dic[key] = buf
-                            del buf
-
-                        if key in ['CCDX','CCDY']:
-                            dic[key] = (dic[key] + CCD_bzero) / CCD_precision
-                        if key in ['CENTDX','CENTDX_ERR','CENTDY','CENTDY_ERR']:
-                            dic[key] = (dic[key] + CENTD_bzero) / CENTD_precision
-                    j += 1
-                except:
-                    break
 
 
 
@@ -1552,7 +1783,7 @@ if __name__ == '__main__':
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='astropy', time_index=range(1000))
-    dic = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_row=10, set_nan=True, fitsreader='fitsio', time_index=range(1000))
+#    dic = get( 'NG0304-1115', ['FLUX', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_row=10, set_nan=True, fitsreader='fitsio', time_index=range(1000))
 #    print dic
 ##    dic2 = get( 'NG0304-1115', ['FLUX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST18', obj_id='bls', set_nan=False, fitsreader='fitsio', time_index=range(1000))
 #
