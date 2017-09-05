@@ -17,19 +17,21 @@ import fitsio
 import os, sys, glob, socket, collections, datetime
 import numpy as np
 
-__version__ = '1.2.0'
 
+###############################################################################
+# Define version
+###############################################################################
+__version__ = '1.2.2'
+
+
+
+###############################################################################
+# Helper function
+###############################################################################
 def warning_on_one_line(message, category, filename, lineno, file=None, line=''):
     return '\n%s: %s, line %s\n\t %s\n\n' % (category.__name__, filename, lineno, message)
 warnings.formatwarning = warning_on_one_line
 
-
-#def version(as_type='str'):
-#    if as_type == 'str':    
-#        return '1.2.0'
-#    elif as_type == 'int':
-#        return 120
-    
 
 
 ###############################################################################
