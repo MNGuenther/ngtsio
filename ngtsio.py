@@ -17,10 +17,19 @@ import fitsio
 import os, sys, glob, socket, collections, datetime
 import numpy as np
 
+__version__ = '1.2.0'
+
 def warning_on_one_line(message, category, filename, lineno, file=None, line=''):
     return '\n%s: %s, line %s\n\t %s\n\n' % (category.__name__, filename, lineno, message)
 warnings.formatwarning = warning_on_one_line
 
+
+#def version(as_type='str'):
+#    if as_type == 'str':    
+#        return '1.2.0'
+#    elif as_type == 'int':
+#        return 120
+    
 
 
 ###############################################################################
@@ -364,15 +373,25 @@ def standard_fnames(fieldname, ngts_version, root, roots):
         if (root is None) and (roots is None):
     
             #::: on laptop (OS X)
-            #TODO:
+            if sys.platform == "darwin":
+                roots = {}
+                roots['nights'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['sysrem'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['bls'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['dilution'] = ''
+                roots['canvas'] = ''
     
             #::: on Cambridge servers
-            #TODO:
+            elif 'ra.phy.cam.ac.uk' in socket.gethostname():
+                roots = {}
+                roots['nights'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['sysrem'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['bls'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                roots['dilution'] = ''
+                roots['canvas'] = ''
     
             #::: on ngtshead (LINUX)
             if 'ngts' in socket.gethostname():
-#                root = glob.glob('/ngts/prodstore/*/MergePipe*NG0613*')[-1]
-    
                 roots = {}
                 roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
                 roots['sysrem'] = glob.glob('/ngts/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
@@ -1845,7 +1864,7 @@ if __name__ == '__main__':
 ##        print '------------'
 ##    print dic
 ##        print dic['FLUX']        
-        
+#        
 #    dic = get( 'NG0524-3056', ['OBJ_ID','ACTIONID','HJD','RA','DEC','DATE-OBS','PERIOD','FLUX','FLUX_ERR','FLUX3'], obj_id=['019164', '022551'], ngts_version='CYCLE1706') #, fitsreader='fitsio', time_index=range(100000))
 #    for key in dic:
 #        print '------------'
