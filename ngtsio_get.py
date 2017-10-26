@@ -172,18 +172,18 @@ get
         if set_nan==True:
             if 'FLUX' not in keys_0: keys.append('FLUX')
             if 'FLAGS' not in keys_0: keys.append('FLAGS')
+                
 
         #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A and TEST18
-        if ngts_version in ('TEST16A','TEST18'):
-            if ('SYSREM_FLUX3' in keys) and ('FLUX' not in keys):
-                keys.append('FLUX')
-                
         #::: transfer 'SYSREM_FLUX3' into 'FLUX' for >= CYCLE1706
-        if ngts_version in ('CYCLE1706'):
-            if ('FLUX' in keys) and ('SYSREM_FLUX3' not in keys):
-                keys.append('SYSREM_FLUX3')
-            if ('FLUX_ERR' in keys) and ('FLUX3_ERR' not in keys):
-                keys.append('FLUX3_ERR')
+        if ('SYSREM_FLUX3' in keys) and ('FLUX' not in keys):
+            keys.append('FLUX')
+        if ('SYSREM_FLUX3_ERR' in keys) and ('FLUX_ERR' not in keys):
+            keys.append('FLUX_ERR')
+        if ('FLUX' in keys) and ('SYSREM_FLUX3' not in keys):
+            keys.append('SYSREM_FLUX3')
+        if ('FLUX_ERR' in keys) and ('FLUX3_ERR' not in keys):
+            keys.append('FLUX3_ERR')
 
         #::: objects
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
@@ -196,22 +196,16 @@ get
         dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
         
         #::: transfer 'FLUX' into 'SYSREM_FLUX3' for TEST16A, TEST18
-        if ngts_version in ('TEST16A','TEST18'):
-            if 'SYSREM_FLUX3' in keys:
-                if 'FLUX' in dic.keys():
-                    dic['SYSREM_FLUX3'] = dic['FLUX']
-                    
         #::: transfer 'SYSREM_FLUX3' into 'FLUX' for >= CYCLE1706
-        if ngts_version in ('CYCLE1706'):
-            #the user key 'FLUX' is referring to the detrended (sysrem) flux with aperture radius 3
-            if 'FLUX' in keys:
-                if 'SYSREM_FLUX3' in dic.keys():
-                    dic['FLUX'] = dic['SYSREM_FLUX3']
-            #the user key 'FLUX_ERR' is referring to the error on the raw (measured) flux with aperture radius 3
-            if 'FLUX_ERR' in keys:
-                if 'FLUX3_ERR' in dic.keys():
-                    dic['FLUX_ERR'] = dic['FLUX3_ERR']
-
+        if ('SYSREM_FLUX3' in keys) and ('FLUX' in dic.keys()):
+            dic['SYSREM_FLUX3'] = dic['FLUX']
+        if ('SYSREM_FLUX3_ERR' in keys) and ('FLUX_ERR' in dic.keys()):
+            dic['SYSREM_FLUX3_ERR'] = dic['FLUX_ERR']
+        if ('FLUX' in keys) and ('SYSREM_FLUX3' in dic.keys()):
+            dic['FLUX'] = dic['SYSREM_FLUX3']
+        if ('FLUX_ERR' in keys) and ('FLUX3_ERR' in dic.keys()):
+            dic['FLUX_ERR'] = dic['FLUX3_ERR']
+        
         #::: set flagged values and flux==0 values to nan
         if set_nan == True:
             dic = set_nan_dic(dic)
