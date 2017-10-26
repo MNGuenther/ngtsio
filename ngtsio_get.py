@@ -36,7 +36,7 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
 
     """
     Convenient wrapper for astropy and cfitsio readers for various NGTS data files.
-
+get
     Parameters
     ----------
         
@@ -156,7 +156,12 @@ def get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=N
     if silent==False: print 'Field name:', fieldname
 
     #::: filenames
-    if fnames is None: fnames = standard_fnames(fieldname, ngts_version, root, roots, silent)
+    if fnames is None: 
+        fnames = standard_fnames(fieldname, ngts_version, root, roots, silent)
+    else:
+        #hack to be upward compatible to new ngts_versions
+        fnames['CATALOGUE'] = fnames['nights']
+        fnames['IMAGELIST'] = fnames['nights']
 
     if check_files(fnames):
 
@@ -366,105 +371,112 @@ def standard_fnames(fieldname, ngts_version, root, roots, silent):
 
     if ngts_version in new_versions:
 
-        if (root is None) and (roots is None):
-    
-            #::: on laptop (OS X)
-            if sys.platform == "darwin":
-                roots = {}
-                roots['nights'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['sysrem'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['bls'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['dilution'] = ''
-                roots['canvas'] = ''
-    
-            #::: on Cambridge servers
-            elif 'ra.phy.cam.ac.uk' in socket.gethostname():
-                roots = {}
-                roots['nights'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['sysrem'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['bls'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['dilution'] = ''
-                roots['canvas'] = ''
-    
-            #::: on ngtshead (LINUX)
-            if 'ngts' in socket.gethostname():
-                roots = {}
-                roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['sysrem'] = glob.glob('/ngts/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['bls'] = glob.glob('/ngts/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
-                roots['dilution'] = ''
-                roots['canvas'] = ''
-    
-    
-        #root will overwrite individual roots
-        elif root is not None:
-    
-            roots = {}
-            roots['nights'] = root
-            roots['sysrem'] = root
-            roots['bls'] = root
-            roots['dilution'] = root
-            roots['canvas'] = root
-    
-    
-        #otherwise roots has been given (try-except will catch the None or non-existing entries)
-        else:
-            pass
-    
-    
-        fnames = {}
-        
-        #Nights
-        f_nights = os.path.join( roots['nights'], '*'+fieldname+'*.fits' )
-        try:
-            fnames['nights'] = glob.glob( f_nights ) #this is now a list of all single files (e.g. FLAGS, FLUX3, FLUX3_ERR, CCDX etc.)
-        except:
-            fnames['nights'] = None
-            warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
-        
-        #BLS
-        f_bls = os.path.join( roots['bls'], '*'+fieldname+'*.fits' )
-        try:
-            fnames['bls'] = glob.glob( f_bls )[-1]
-        except:
-            fnames['bls'] = None
-            warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
+        try: 
             
-        #SYSREM
-        f_sysrem = os.path.join( roots['sysrem'], '*'+fieldname+'*SYSREM_FLUX3*.fits' )
-        try:
-            fnames['sysrem'] = glob.glob( f_sysrem )[-1]
-        except:
-            fnames['sysrem'] = None
-            warnings.warn( str(fieldname)+': Fits files "sysrem" do not exist in '+str(f_nights) )
+            if (root is None) and (roots is None):
+        
+                #::: on laptop (OS X)
+                if sys.platform == "darwin":
+                    roots = {}
+                    roots['nights'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['sysrem'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['bls'] = glob.glob('/Users/mx/Big_Data/BIG_DATA_NGTS/2017/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['dilution'] = ''
+                    roots['canvas'] = ''
+        
+                #::: on Cambridge servers
+                elif 'ra.phy.cam.ac.uk' in socket.gethostname():
+                    roots = {}
+                    roots['nights'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['sysrem'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['bls'] = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['dilution'] = ''
+                    roots['canvas'] = ''
+        
+                #::: on ngtshead (LINUX)
+                if 'ngts' in socket.gethostname():
+                    roots = {}
+                    roots['nights'] = glob.glob('/ngts/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['sysrem'] = glob.glob('/ngts/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['bls'] = glob.glob('/ngts/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*')[-1]
+                    roots['dilution'] = ''
+                    roots['canvas'] = ''
+        
+            #root will overwrite individual roots
+            elif root is not None:
+        
+                roots = {}
+                roots['nights'] = root
+                roots['sysrem'] = root
+                roots['bls'] = root
+                roots['dilution'] = root
+                roots['canvas'] = root
         
         
-        #TODO:
-        fnames['dilution'] = None
-        fnames['canvas'] = None
+            #otherwise roots has been given (try-except will catch the None or non-existing entries)
+            else:
+                pass
         
         
-        fnames['CATALOGUE']     = [x for x in fnames['nights'] if 'CATALOGUE.fits' in x][0]
-        fnames['CCDX']          = [x for x in fnames['nights'] if 'CCDX.fits' in x][0]
-        fnames['CCDY']          = [x for x in fnames['nights'] if 'CCDY.fits' in x][0]
-        fnames['CENTDX_ERR']    = [x for x in fnames['nights'] if 'CENTDX_ERR.fits' in x][0]
-        fnames['CENTDX']        = [x for x in fnames['nights'] if 'CENTDX.fits' in x][0]
-        fnames['CENTDY_ERR']    = [x for x in fnames['nights'] if 'CENTDY_ERR.fits' in x][0]
-        fnames['CENTDY']        = [x for x in fnames['nights'] if 'CENTDY.fits' in x][0]
-        fnames['FLAGS']         = [x for x in fnames['nights'] if 'FLAGS.fits' in x][0]
-        fnames['FLUX_ERR']      = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0] #FLUX = FLUX3
-        fnames['FLUX']          = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]     #FLUX = FLUX3
-        fnames['FLUX3_ERR']     = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0]
-        fnames['FLUX3']         = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]
-        fnames['FLUX4_ERR']     = [x for x in fnames['nights'] if 'FLUX4_ERR.fits' in x][0]
-        fnames['FLUX4']         = [x for x in fnames['nights'] if 'FLUX4.fits' in x][0]
-        fnames['FLUX5_ERR']     = [x for x in fnames['nights'] if 'FLUX5_ERR.fits' in x][0]
-        fnames['FLUX5']         = [x for x in fnames['nights'] if 'FLUX5.fits' in x][0]
-        fnames['HJD']           = [x for x in fnames['nights'] if 'HJD.fits' in x][0]
-        fnames['IMAGELIST']     = [x for x in fnames['nights'] if 'IMAGELIST.fits' in x][0]
-        fnames['SKYBKG']        = [x for x in fnames['nights'] if 'SKYBKG.fits' in x][0]
-        fnames['SUB_PROD_LIST'] = [x for x in fnames['nights'] if 'SUB_PROD_LIST.fits' in x][0]
+            fnames = {}
+            
+            #Nights
+            f_nights = os.path.join( roots['nights'], '*'+fieldname+'*.fits' )
+            try:
+                fnames['nights'] = glob.glob( f_nights ) #this is now a list of all single files (e.g. FLAGS, FLUX3, FLUX3_ERR, CCDX etc.)
+            except:
+                fnames['nights'] = None
+                warnings.warn( str(fieldname)+': Fits files "nights" do not exist in '+str(f_nights) )
+            
+            #BLS
+            f_bls = os.path.join( roots['bls'], '*'+fieldname+'*.fits' )
+            try:
+                fnames['bls'] = glob.glob( f_bls )[-1]
+            except:
+                fnames['bls'] = None
+                warnings.warn( str(fieldname)+': Fits files "bls" do not exist in '+str(f_bls) )
+                
+            #SYSREM
+            f_sysrem = os.path.join( roots['sysrem'], '*'+fieldname+'*SYSREM_FLUX3*.fits' )
+            try:
+                fnames['sysrem'] = glob.glob( f_sysrem )[-1]
+            except:
+                fnames['sysrem'] = None
+                warnings.warn( str(fieldname)+': Fits files "sysrem" do not exist in '+str(f_nights) )
+            
+            
+            #TODO:
+            fnames['dilution'] = None
+            fnames['canvas'] = None
+            
+            
+            fnames['CATALOGUE']     = [x for x in fnames['nights'] if 'CATALOGUE.fits' in x][0]
+            fnames['CCDX']          = [x for x in fnames['nights'] if 'CCDX.fits' in x][0]
+            fnames['CCDY']          = [x for x in fnames['nights'] if 'CCDY.fits' in x][0]
+            fnames['CENTDX_ERR']    = [x for x in fnames['nights'] if 'CENTDX_ERR.fits' in x][0]
+            fnames['CENTDX']        = [x for x in fnames['nights'] if 'CENTDX.fits' in x][0]
+            fnames['CENTDY_ERR']    = [x for x in fnames['nights'] if 'CENTDY_ERR.fits' in x][0]
+            fnames['CENTDY']        = [x for x in fnames['nights'] if 'CENTDY.fits' in x][0]
+            fnames['FLAGS']         = [x for x in fnames['nights'] if 'FLAGS.fits' in x][0]
+            fnames['FLUX_ERR']      = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0] #FLUX = FLUX3
+            fnames['FLUX']          = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]     #FLUX = FLUX3
+            fnames['FLUX3_ERR']     = [x for x in fnames['nights'] if 'FLUX3_ERR.fits' in x][0]
+            fnames['FLUX3']         = [x for x in fnames['nights'] if 'FLUX3.fits' in x][0]
+            fnames['FLUX4_ERR']     = [x for x in fnames['nights'] if 'FLUX4_ERR.fits' in x][0]
+            fnames['FLUX4']         = [x for x in fnames['nights'] if 'FLUX4.fits' in x][0]
+            fnames['FLUX5_ERR']     = [x for x in fnames['nights'] if 'FLUX5_ERR.fits' in x][0]
+            fnames['FLUX5']         = [x for x in fnames['nights'] if 'FLUX5.fits' in x][0]
+            fnames['HJD']           = [x for x in fnames['nights'] if 'HJD.fits' in x][0]
+            fnames['IMAGELIST']     = [x for x in fnames['nights'] if 'IMAGELIST.fits' in x][0]
+            fnames['SKYBKG']        = [x for x in fnames['nights'] if 'SKYBKG.fits' in x][0]
+            fnames['SUB_PROD_LIST'] = [x for x in fnames['nights'] if 'SUB_PROD_LIST.fits' in x][0]
     
+    
+    
+        except:
+            fnames = None
+            
+            
     
         return fnames
 
@@ -473,18 +485,21 @@ def standard_fnames(fieldname, ngts_version, root, roots, silent):
 
 
 def check_files(fnames):
-    return True
+#    return True
 
-#    if fnames['nights'] is None:
-#        return False
-#
+    if (fnames is None) or (fnames['nights'] is None):
+        return False
+        
+    else:
+        return True
+
 #    elif fnames is not None:
 #        for i,fnames_key in enumerate(['nights','sysrem','bls','canvas']):
 #            if fnames[fnames_key] is not None and not os.path.isfile(fnames[fnames_key]):
 #                fnames[fnames_key] = None
 #                warnings.warn("fname['" + fnames_key + "']:" + str(fnames[fnames_key]) + "not found. Set to 'None'.")
 #        return True
-#
+
 #    else:
 #        return False
 
@@ -1719,7 +1734,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
 # Simplify output if only one object is retrieved
 ###############################################################################
 def get_canvas_data( fnames, keys, dic ):
-    if fnames['canvas'] is not None:
+    if ('canvas' in fnames) and (fnames['canvas'] is not None):
         #::: load canvasdata
         canvasdata = np.genfromtxt(fnames['canvas'], dtype=None, names=True)
         canvas_obj_ids = objid_6digit( canvasdata['OBJ_ID'].astype('|S6') )
@@ -1834,6 +1849,13 @@ def check_dic(dic, keys, silent):
 # MAIN
 ###############################################################################
 if __name__ == '__main__':
+    
+#    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
+##    fnames = {'NIGHTS':}
+#    dic = get('fake', ['FLUX', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], fnames={'nights':fname})
+#    print dic
+    
+    
     pass
 #    dic = get( 'NG0304-1115', ['OBJ_ID','ACTIONID','HJD','SYSREM_FLUX3','DATE-OBS','CANVAS_Rp','CANVAS_Rs','PERIOD','CANVAS_PERIOD','WIDTH','CANVAS_WIDTH','EPOCH','CANVAS_EPOCH','DEPTH','CANVAS_DEPTH'], obj_row=range(10), ngts_version='TEST16A', roots=roots, set_nan=True) #, fitsreader='fitsio', time_index=range(100000))
 #    dic = get( 'NG0304-1115', ['DILUTION', 'PERIOD', 'CANVAS_PERIOD'], ngts_version='TEST16A', obj_row=range(10), time_hjd=range(700,710), set_nan=False) #, fitsreader='fitsio', time_index=range(100000))

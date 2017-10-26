@@ -13,6 +13,7 @@ Email: mg719@cam.ac.uk
 
 import numpy as np
 import sys
+import timeit
 
 import ngtsio
 
@@ -161,8 +162,33 @@ def test(keys):
     test2(keys)
     test3(keys)
     test4(keys)
+ 
+
+
+
+def compare_fitsreader_speed():
     
-    
+    def test_pyfits_all():
+        ngtsio.get('NG0304-1115', ['FLUX_MEAN','RA','DEC'], fitsreader='pyfits')
+        
+    def test_fitsio_all():
+        ngtsio.get('NG0304-1115', ['FLUX_MEAN','RA','DEC'], fitsreader='fitsio')
+        
+    def test_pyfits():
+        ngtsio.get('NG0304-1115', ['FLUX','CENTDX','CENTDY'], fitsreader='pyfits', obj_id=12118)
+        
+    def test_fitsio():
+        ngtsio.get('NG0304-1115', ['FLUX','CENTDX','CENTDY'], fitsreader='fitsio', obj_id=12118)
+        
+        
+    print 'pyfits', timeit.timeit(test_pyfits, number=5)
+    print 'fitsio', timeit.timeit(test_fitsio, number=5)
+    print 'pyfits (all)', timeit.timeit(test_pyfits_all, number=5)
+    print 'fitsio (all)', timeit.timeit(test_fitsio_all, number=5)
+        
+        
+        
     
 if __name__ == '__main__':    
-    test(quickkeys)
+#    test(quickkeys)
+    pass

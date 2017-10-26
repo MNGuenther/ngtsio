@@ -12,14 +12,15 @@ Email: mg719@cam.ac.uk
 """
 
 import numpy as np
-import ngtsio_get
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-
+import os
+import ngtsio_get
 
 
 def find(RA, DEC, unit='hmsdms', frame='icrs', ngts_version='all', 
-         give_obj_id=True, search_radius=0.0014, field_radius=2.):
+         give_obj_id=True, search_radius=0.0014, field_radius=2.,
+         outfname=None):
     
     '''
     input:
@@ -32,6 +33,14 @@ def find(RA, DEC, unit='hmsdms', frame='icrs', ngts_version='all',
     search_radius: 0.0014 degree = 4.97 arcsec = 1 NGTS pixel
     field_radius:  1.92 degree, from center to the corner for square 7.4 sq deg FoV
     ''' 
+    
+    #list of NGTS fields, lying in the same directory
+    fname_fieldlist = os.path.join( os.path.dirname(os.path.realpath(__file__)), 'List_of_observed_NGTS_fields.txt' )
+    
+    
+    
+    #outfile
+#    if not os.path.exists(outfname): os.makedirs(outfname)
     
     
     #convert RA and DEC from string into skycoords
@@ -50,7 +59,7 @@ def find(RA, DEC, unit='hmsdms', frame='icrs', ngts_version='all',
     
     
     #read list of observed NGTS fields from opis (needs to be manually updated)
-    d = np.genfromtxt('List_of_observed_NGTS_fields.txt', usecols=[0,3], dtype=None)
+    d = np.genfromtxt(fname_fieldlist, usecols=[0,3], dtype=None)
     fieldnames    = d[:,0]
     ngts_versions = d[:,1]
     
@@ -81,35 +90,50 @@ def find(RA, DEC, unit='hmsdms', frame='icrs', ngts_version='all',
         for i in ind_field:
             
             dic = ngtsio_get.get(fieldnames[i][0:11], ['RA','DEC'], ngts_version=ngts_versions[i], silent=True) 
-            RA_objs = dic['RA']*180./np.pi
-            DEC_objs = dic['DEC']*180./np.pi
             
-            ind_obj = np.where( (np.abs(RA_objs - RA) < search_radius) 
-                              & (np.abs(DEC_objs - DEC) < search_radius) )[0]
-                             
-            if len(ind_obj) > 0:
-                obj_id[i] = dic['OBJ_ID'][ind_obj]
+            if dic is not None:            
+                RA_objs = dic['RA']*180./np.pi
+                DEC_objs = dic['DEC']*180./np.pi
+                
+                ind_obj = np.where( (np.abs(RA_objs - RA) < search_radius) 
+                                  & (np.abs(DEC_objs - DEC) < search_radius) )[0]
+                                 
+                if len(ind_obj) > 0:
+                    obj_id[i] = dic['OBJ_ID'][ind_obj]
+            
+            else:
+                obj_id[i] = 'fits_not_available'
     else:
         obj_id = ['']*len(fieldnames)
         
         
         
     #output
-    if len(ind_field) == 0:
-        print RA_input +'\t'+ DEC_input +'\t'+ 'no match'
-    else:
-#        print RA, DEC, 'in fields:'
-        for i in ind_field:
-#            print list(obj_id[i])
-            if obj_id[i] is not 'None':
-                obj_id_str = '\t'.join( list(obj_id[i]) )
-            else:
-                obj_id_str = 'None'
-            print RA_input +'\t'+ DEC_input +'\t'+ fieldnames[i][0:11] +'\t'+ ngts_versions[i] +'\t'+ obj_id_str
-        
+    def printer(outfile):
+        if len(ind_field) == 0:
+            line = RA_input +'\t'+ DEC_input +'\t'+ 'no match'
+            print line
+            if outfile is not None: outfile.write(line+'\n')
+        else:
+    #        print RA, DEC, 'in fields:'
+            for i in ind_field:
+    #            print list(obj_id[i])
+                if (obj_id[i] is not 'None') & (obj_id[i] is not 'fits_not_available'):
+                    obj_id_str = '\t'.join( list(obj_id[i]) )
+                else:
+                    obj_id_str = obj_id[i]
+                line = RA_input +'\t'+ DEC_input +'\t'+ fieldnames[i][0:11] +'\t'+ ngts_versions[i] +'\t'+ obj_id_str
+                print line
+                if outfile is not None: outfile.write(line+'\n')
+                
     
+    if outfname is not None:            
+        with open(outfname, 'a') as outfile:
+            printer(outfile)
+    else:
+        printer(None)
+        
+            
     
 if __name__ == '__main__':
-    find('03 05 00', '-11 55 00', ngts_version='TEST18')
-#    DEC': -0.17282542586326599, 'FIELDNAME': 'NG0304-1115', 'RA': 0.82299971580505371
-    find(0.82299971580505371, -0.17282542586326599, ngts_version='TEST18', unit='rad')
+    pass
