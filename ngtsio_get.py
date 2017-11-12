@@ -1731,8 +1731,8 @@ def check_dic(dic, keys, silent):
 if __name__ == '__main__':
     pass
     
-#    import matplotlib.pyplot as plt
-#    from pprint import pprint
+    import matplotlib.pyplot as plt
+    from pprint import pprint
 #    
 #    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
 #    dic = get('NULL', 'NULL', ['FLUX', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], fnames={'BLSPipe_megafile':fname})
@@ -1744,5 +1744,17 @@ if __name__ == '__main__':
 #    plt.plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
 #    plt.figure()
-#    plt.plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'r.',rasterized=True)    
+#    plt.plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'r.',rasterized=True)  
+#
+    dic = get( 'NG0409-1941', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'PERIOD', 'EPOCH'], set_nan=True)
+    pprint(dic)
+    fig, axes = plt.subplots(4,1, figsize=(6,10))
+    axes[0].plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
+    axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
+    axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'g.',rasterized=True)
+    axes[1].plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
+    axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
+    axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
+       
+    
 
