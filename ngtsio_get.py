@@ -1758,7 +1758,7 @@ if __name__ == '__main__':
     axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'g.',rasterized=True)
     axes[1].plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
     axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
-    axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
+    axes[3].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
     plt.show()
     
 
