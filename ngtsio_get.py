@@ -179,9 +179,10 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
     """
 
 
-    #Deprecation warning
+    #'FLUX' vs 'SYSREM_FLUX3'
     if ('FLUX' in keys) and ( (fnames is None) or ('BLSPipe_megafile' not in fnames)):
-        warnings.warn('FLUX key is deprecated unless for in-pipeline use. Please use FLUX3, FLUX4, FLUX5, SYSREM_FLUX3 or DECORR_FLUX3.')
+        warnings.warn('FLUX key is deprecated unless for in-pipeline use.  \
+                       Please use FLUX3, FLUX4, FLUX5, SYSREM_FLUX3 or DECORR_FLUX3 for final products.')
 
     if not silent: 
         print 'Field name:', fieldname
@@ -202,6 +203,10 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
         keys_0 = 1*keys #copy list
         keys_0.append('OBJ_ID')
         
+        #::: in pipeline only
+        if ('SYSREM_FLUX3' in keys) and (fnames is not None) and ('BLSPipe_megafile' in fnames):
+            keys.append('FLUX')
+        
         #::: append FLAGS for set_nan
         if set_nan and ('FLAGS' not in keys_0): 
             keys.append('FLAGS')
@@ -216,6 +221,12 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
         #::: get dictionary
         dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
         
+        #::: in pipeline only
+        if ('SYSREM_FLUX3' in keys) and (fnames is not None) and ('BLSPipe_megafile' in fnames):
+            dic['SYSREM_FLUX3'] = dic['FLUX']
+            if 'FLUX' not in keys_0:
+                del dic['FLUX']
+            
         #::: set flagged values and flux==0 values to nan
         if set_nan:
             dic = set_nan_dic(dic)
@@ -1737,13 +1748,13 @@ def check_dic(dic, keys, silent):
 if __name__ == '__main__':
     pass
     
-    import matplotlib.pyplot as plt
-    from pprint import pprint
-#    
+#    import matplotlib.pyplot as plt
+#    from pprint import pprint
+
 #    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
-#    dic = get('NULL', 'NULL', ['FLUX', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], fnames={'BLSPipe_megafile':fname})
+#    dic = get('NULL', 'NULL', ['SYSREM_FLUX3', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, fnames={'BLSPipe_megafile':fname})
 #    pprint(dic)
-#    
+   
 #    dic = get( 'NG0304-1115', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
 #    pprint(dic)
 #    plt.figure()
@@ -1751,16 +1762,16 @@ if __name__ == '__main__':
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
 #    plt.figure()
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'r.',rasterized=True)  
-#
-    dic = get( 'NG0409-1941', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'PERIOD', 'EPOCH'], obj_row=4277, set_nan=True)
-    pprint(dic)
-    fig, axes = plt.subplots(4,1, figsize=(6,10))
-    axes[0].plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
-    axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
-    axes[0].plot(dic['HJD'],dic['DECORR_FLUX3'],'g.',rasterized=True)
-    axes[1].plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
-    axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
-    axes[3].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
-    plt.show()
+
+#    dic = get( 'NG0409-1941', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'PERIOD', 'EPOCH'], obj_row=4277, set_nan=True)
+#    pprint(dic)
+#    fig, axes = plt.subplots(4,1, figsize=(6,10))
+#    axes[0].plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
+#    axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
+#    axes[0].plot(dic['HJD'],dic['DECORR_FLUX3'],'g.',rasterized=True)
+#    axes[1].plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
+#    axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
+#    axes[3].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
+#    plt.show()
     
 

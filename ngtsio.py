@@ -22,7 +22,7 @@ import pickle
 ###############################################################################
 # Define version
 ###############################################################################
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
     
 '''
@@ -43,7 +43,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
     '''find the obj_id of a given RA and Dec with ngtsio_find.py; see ngtsio_find.py for docstring'''
     
     print '#RA\tDEC\tfieldname\tngts_version\tobj_id'
-    ngtsio_find.find(RA, DEC, unit=unit, frame=frame, ngts_version=ngts_version, 
+    ngtsio_find.find(RA, DEC, ngts_version=ngts_version, unit=unit, frame=frame,  
                      give_obj_id=give_obj_id, search_radius=search_radius, 
                      field_radius=field_radius, outfname=outfname)
     
@@ -56,7 +56,7 @@ def find_list(fname, usecols=(0,1), ngts_version='all', unit='hmsdms', frame='ic
     print '#RA\tDEC\tfieldname\tngts_version\tobj_id'
     RAs, DECs = np.genfromtxt(fname, usecols=usecols, delimiter='\t', dtype=None, unpack=True)
     for i in range(len(RAs)):
-        ngtsio_find.find(RAs[i], DECs[i], ngts_version, unit=unit, frame=frame, 
+        ngtsio_find.find(RAs[i], DECs[i], ngts_version=ngts_version, unit=unit, frame=frame, 
                      give_obj_id=give_obj_id, search_radius=search_radius, 
                      field_radius=field_radius, outfname=outfname)
 
@@ -73,11 +73,10 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None,
         fnames=None, root=None, roots=None, silent=False, set_nan=False):
     '''get data for a given object with ngtsio_get.py; see ngtsio_get.py for docstring'''
             
-    dic = ngtsio_get.get(fieldname, keys, obj_id=obj_id, obj_row=obj_row, 
+    dic = ngtsio_get.get(fieldname, ngts_version, keys, obj_id=obj_id, obj_row=obj_row, 
         time_index=time_index, time_date=time_date, time_hjd=time_hjd, time_actionid=time_actionid, 
         bls_rank=bls_rank, indexing=indexing, fitsreader=fitsreader, simplify=simplify, 
-        fnames=fnames, root=root, roots=roots, silent=silent, ngts_version=ngts_version, 
-        set_nan=set_nan)
+        fnames=fnames, root=root, roots=roots, silent=silent, set_nan=set_nan)
             
     return dic
     
@@ -94,13 +93,12 @@ def save(outfilename, fieldname, ngts_version, keys, obj_id=None, obj_row=None,
         fnames=None, root=None, roots=None, silent=False, set_nan=False):
     '''save data for a given object to outfilename.pickle via ngtsio_get.py; see ngtsio_get.py for docstring'''
             
-    dic = ngtsio_get.get(fieldname, keys, obj_id=obj_id, obj_row=obj_row, 
+    dic = ngtsio_get.get(fieldname, ngts_version, keys, obj_id=obj_id, obj_row=obj_row, 
         time_index=time_index, time_date=time_date, time_hjd=time_hjd, time_actionid=time_actionid, 
         bls_rank=bls_rank, indexing=indexing, fitsreader=fitsreader, simplify=simplify, 
-        fnames=fnames, root=root, roots=roots, silent=silent, ngts_version=ngts_version, 
-        set_nan=set_nan)
+        fnames=fnames, root=root, roots=roots, silent=silent, set_nan=set_nan)
         
     pickle.dump( dic, open( outfilename+'.pickle', 'wb' ) )
     
-            
+    
  
