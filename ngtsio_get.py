@@ -348,6 +348,7 @@ def standard_fnames(fieldname, ngts_version, roots, silent):
         try:
             f_decorr = os.path.join( roots['decorr'], '*'+fieldname+'*DECORR_FLUX3*.fits' )
             fnames['decorr'] = glob.glob( f_decorr )[-1]
+            print fnames['decorr']
         except:
             fnames['decorr'] = None
 #            warnings.warn( str(fieldname)+': Fits files "decorr" does not exist.' )
@@ -1538,12 +1539,14 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
 
 
     if ('decorr' in fnames) and (fnames['decorr'] is not None):
+        print 'yupyupyup'
         with fitsio.FITS(fnames['decorr'], vstorage='object') as hdulist_sysrem:
             j = 0
             while j!=-1:
                 try:
                     hdukey = hdulist_sysrem[j].get_extname()
                     if hdukey in keys:
+                        print hdukey
                         key = hdukey
 
                         #::: read out individual objects (more memory efficient)
