@@ -1438,9 +1438,11 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                        
 
     if ('sysrem' in fnames) and (fnames['sysrem'] is not None):
+        print 'sysrem yupyup'
         with fitsio.FITS(fnames['sysrem'], vstorage='object') as hdulist_sysrem:
             j = 0
             while j!=-1:
+                print 'sys:', hdulist_sysrem[j].get_extname()
                 try:
                     hdukey = hdulist_sysrem[j].get_extname()
                     if hdukey in keys:
@@ -1541,9 +1543,11 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
     if ('decorr' in fnames) and (fnames['decorr'] is not None):
         print 'yupyupyup'
         with fitsio.FITS(fnames['decorr'], vstorage='object') as hdulist_sysrem:
-            print hdulist_sysrem[j].get_extname()
             j = 0
             while j!=-1:
+                print 'deco', hdulist_sysrem[j].get_extname()
+                if hdukey in keys:
+                    print hdukey
                 try:
                     hdukey = hdulist_sysrem[j].get_extname()
                     if hdukey in keys:
