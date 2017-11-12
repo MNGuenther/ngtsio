@@ -99,8 +99,8 @@ def test1(keys):
     for i,key in enumerate(keys):
         waitbar(i, N, extra=key)
     #    print key
-        dic_astropy = ngtsio.get( 'NG0304-1115', [key], fitsreader='astropy', silent=True )
-        dic_fitsio = ngtsio.get( 'NG0304-1115', [key], fitsreader='fitsio', silent=True )
+        dic_astropy = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], fitsreader='astropy', silent=True )
+        dic_fitsio = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], fitsreader='fitsio', silent=True )
         compare_dic(dic_astropy, dic_fitsio)
     print '\nTest 1 succesful.'
 
@@ -115,8 +115,8 @@ def test2(keys):
             for i,key in enumerate(keys):
                 waitbar(i, N, extra=key)
 #                print key
-                dic_astropy = ngtsio.get( 'NG0304-1115', [key], obj_row=obj_row, time_hjd=time_hjd, fitsreader='astropy', silent=True )
-                dic_fitsio = ngtsio.get( 'NG0304-1115', [key], obj_row=obj_row, time_hjd=time_hjd, fitsreader='fitsio', silent=True )
+                dic_astropy = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_row=obj_row, time_hjd=time_hjd, fitsreader='astropy', silent=True )
+                dic_fitsio = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_row=obj_row, time_hjd=time_hjd, fitsreader='fitsio', silent=True )
                 compare_dic(dic_astropy, dic_fitsio)
             print '\nTest 2-'+str(j)+' succesful.'
             j += 1
@@ -132,8 +132,8 @@ def test3(keys):
             for i,key in enumerate(keys):
                 waitbar(i, N, extra=key)
 #                    print key
-                dic_astropy = ngtsio.get( 'NG0304-1115', [key], obj_id=obj_id, time_date=time_date, fitsreader='astropy', silent=True )
-                dic_fitsio = ngtsio.get( 'NG0304-1115', [key], obj_id=obj_id, time_date=time_date, fitsreader='fitsio', silent=True )
+                dic_astropy = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_id=obj_id, time_date=time_date, fitsreader='astropy', silent=True )
+                dic_fitsio = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_id=obj_id, time_date=time_date, fitsreader='fitsio', silent=True )
                 compare_dic(dic_astropy, dic_fitsio)
             print '\nTest 3.'+str(j)+' succesful.'
             j += 1
@@ -148,8 +148,8 @@ def test4(keys):
         for i,key in enumerate(keys):
             waitbar(i, N, extra=key)
         #    print key
-            dic_astropy = ngtsio.get( 'NG0304-1115', [key], obj_id='bls', time_actionid=time_actionid, fitsreader='astropy', silent=True )
-            dic_fitsio = ngtsio.get( 'NG0304-1115', [key], obj_id='bls', time_actionid=time_actionid, fitsreader='fitsio', silent=True )
+            dic_astropy = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_id='bls', time_actionid=time_actionid, fitsreader='astropy', silent=True )
+            dic_fitsio = ngtsio.get( 'NG0304-1115', 'CYCLE1706', [key], obj_id='bls', time_actionid=time_actionid, fitsreader='fitsio', silent=True )
             compare_dic(dic_astropy, dic_fitsio)
         print '\nTest 4.'+str(j)+' succesful.'
         j += 1
@@ -169,16 +169,16 @@ def test(keys):
 def compare_fitsreader_speed():
     
     def test_pyfits_all():
-        ngtsio.get('NG0304-1115', ['FLUX_MEAN','RA','DEC'], fitsreader='pyfits')
+        ngtsio.get('NG0304-1115', 'CYCLE1706', ['FLUX_MEAN','RA','DEC'], fitsreader='pyfits')
         
     def test_fitsio_all():
-        ngtsio.get('NG0304-1115', ['FLUX_MEAN','RA','DEC'], fitsreader='fitsio')
+        ngtsio.get('NG0304-1115', 'CYCLE1706', ['FLUX_MEAN','RA','DEC'], fitsreader='fitsio')
         
     def test_pyfits():
-        ngtsio.get('NG0304-1115', ['FLUX','CENTDX','CENTDY'], fitsreader='pyfits', obj_id=12118)
+        ngtsio.get('NG0304-1115', 'CYCLE1706', ['FLUX','CENTDX','CENTDY'], fitsreader='pyfits', obj_id=12118)
         
     def test_fitsio():
-        ngtsio.get('NG0304-1115', ['FLUX','CENTDX','CENTDY'], fitsreader='fitsio', obj_id=12118)
+        ngtsio.get('NG0304-1115', 'CYCLE1706', ['FLUX','CENTDX','CENTDY'], fitsreader='fitsio', obj_id=12118)
         
         
     print 'pyfits', timeit.timeit(test_pyfits, number=5)

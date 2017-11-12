@@ -18,25 +18,35 @@ import os
 import ngtsio_get
 
 
-def find(RA, DEC, unit='hmsdms', frame='icrs', ngts_version='all', 
+def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs', 
          give_obj_id=True, search_radius=0.0014, field_radius=2.,
          outfname=None):
     
     '''
-    input:
-    RA:           in h m s as space seperated string
-    DEC:          in d m s as space seperated string
-    unit:         'hmsdms', 'deg', 'rad'
-    frame:        'icrs' or others that astropy accepts
-    ngts_version: 'all' or e.g. 'CYCLE1706'
-    give_obj_id:   also retrieve the obj_id
-    search_radius: 0.0014 degree = 4.97 arcsec = 1 NGTS pixel
-    field_radius:  1.92 degree, from center to the corner for square 7.4 sq deg FoV
+    find the obj_id of a given RA and Dec
+    
+    Parameters
+    ----------
+    RA : str
+       in h m s as space seperated string
+    DEC : str
+        in d m s as space seperated string
+    unit : str
+        'hmsdms', 'deg', 'rad'
+    frame : str
+        'icrs' or others that astropy accepts
+    ngts_version : str
+        'all' or e.g. 'CYCLE1706'
+    give_obj_id : bool
+        also retrieve the obj_id
+    search_radius : float
+        0.0014 degree = 4.97 arcsec = 1 NGTS pixel
+    field_radius : float
+        1.92 degree, from center to the corner for square 7.4 sq deg FoV
     ''' 
     
     #list of NGTS fields, lying in the same directory
     fname_fieldlist = os.path.join( os.path.dirname(os.path.realpath(__file__)), 'List_of_observed_NGTS_fields.txt' )
-    
     
     
     #outfile
