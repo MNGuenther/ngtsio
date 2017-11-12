@@ -1548,6 +1548,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                 try:
                     hdukey = hdulist_sysrem[j].get_extname() + '3' #little hack because of inconsistent extname convention
                     if hdukey in keys:
+                        print hdukey
                         key = hdukey
 
                         #::: read out individual objects (more memory efficient)
@@ -1560,6 +1561,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                                     ind_timeX = [x - ind_time[0] for x in ind_time]
                                     buf = buf[:,ind_timeX]
                                 dic[key][i,:] = buf
+                                print buf
                             del buf
 
                         #::: read out all objects at once
@@ -1755,7 +1757,7 @@ if __name__ == '__main__':
     fig, axes = plt.subplots(4,1, figsize=(6,10))
     axes[0].plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
     axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
-    axes[0].plot(dic['HJD'],dic['SYSREM_FLUX3'],'g.',rasterized=True)
+    axes[0].plot(dic['HJD'],dic['DECORR_FLUX3'],'g.',rasterized=True)
     axes[1].plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
     axes[2].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['FLUX3'],'k.',rasterized=True)  
     axes[3].plot(dic['HJD'],dic['DECORR_FLUX3']-dic['SYSREM_FLUX3'],'k.',rasterized=True)  
