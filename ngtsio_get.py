@@ -1541,6 +1541,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
     if ('decorr' in fnames) and (fnames['decorr'] is not None):
         print 'yupyupyup'
         with fitsio.FITS(fnames['decorr'], vstorage='object') as hdulist_sysrem:
+            print hdulist_sysrem[j].get_extname()
             j = 0
             while j!=-1:
                 try:
@@ -1571,6 +1572,7 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                             del buf
                     j += 1
                 except:
+                    print 'oooops'
                     break
                 
                 
