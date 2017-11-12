@@ -1546,10 +1546,10 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
             j = 0
             while j!=-1:
                 try:
-                    hdukey = hdulist_sysrem[j].get_extname() + '3' #little hack because of inconsistent extname convention
-                    if hdukey in keys:
+                    hdukey = hdulist_sysrem[j].get_extname() 
+                    if hdukey + '3' in keys: #little hack because of inconsistent extname convention
                         print hdukey
-                        key = hdukey
+                        key = hdukey + '3' #little hack because of inconsistent extname convention
 
                         #::: read out individual objects (more memory efficient)
                         if allobjects == False:
