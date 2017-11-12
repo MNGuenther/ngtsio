@@ -1750,7 +1750,7 @@ if __name__ == '__main__':
 #    plt.figure()
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3']-dic['FLUX3'],'r.',rasterized=True)  
 #
-    dic = get( 'NG0409-1941', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'PERIOD', 'EPOCH'], obj_row=1, set_nan=True)
+    dic = get( 'NG0409-1941', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'PERIOD', 'EPOCH'], obj_row=4277, set_nan=True)
     pprint(dic)
     fig, axes = plt.subplots(4,1, figsize=(6,10))
     axes[0].plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
