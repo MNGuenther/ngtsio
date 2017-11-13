@@ -14,7 +14,7 @@ Email: mg719@cam.ac.uk
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-import os
+import glob, socket
 import ngtsio_get
 
 
@@ -46,7 +46,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
     ''' 
     
     #list of NGTS fields, lying in the same directory
-    fname_fieldlist = os.path.join( os.path.dirname(os.path.realpath(__file__)), 'List_of_observed_NGTS_fields.txt' )
+#    fname_fieldlist = os.path.join( os.path.dirname(os.path.realpath(__file__)), 'List_of_observed_NGTS_fields.txt' )
     
     
     #outfile
@@ -69,9 +69,25 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
     
     
     #read list of observed NGTS fields from opis (needs to be manually updated)
-    d = np.genfromtxt(fname_fieldlist, usecols=[0,3], dtype=None)
-    fieldnames    = d[:,0]
-    ngts_versions = d[:,1]
+    fieldnames = []
+    ngts_versions = []
+    
+    #::: on Cambridge servers
+    if 'ra.phy.cam.ac.uk' in socket.gethostname():
+        dirs = glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/MergePipe*')
+        
+    #::: on ngtshead (LINUX)
+    elif 'ngts' in socket.gethostname():
+        dirs = glob.glob('/ngts/prodstore/*/MergePipe*')
+        
+    for dir1 in dirs:
+        f, n = [dir1.split('/')[-1].replace('_','.').split('.')[i] for i in (4,-1)]
+        fieldnames.append(f)
+        ngts_versions.append(n)
+        
+#    d = np.genfromtxt(fname_fieldlist, usecols=[0,3], dtype=None)
+#    fieldnames    = d[:,0]
+#    ngts_versions = d[:,1]
     
     
     
@@ -148,3 +164,6 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
     
 if __name__ == '__main__':
     pass
+    find(94.4447609, -35.70636526, ngts_version='all', unit='deg', frame='icrs', 
+             give_obj_id=True, search_radius=0.0014, field_radius=2.,
+             outfname=None)
