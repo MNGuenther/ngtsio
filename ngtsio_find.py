@@ -101,9 +101,10 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
             
             dic = ngtsio_get.get(fieldnames[i][0:11], ['RA','DEC'], ngts_version=ngts_versions[i], silent=True) 
             
-            if dic is not None:            
-                RA_objs = dic['RA']*180./np.pi
-                DEC_objs = dic['DEC']*180./np.pi
+            if dic is not None:  
+                #RA and DEC come out in degree
+                RA_objs = dic['RA']
+                DEC_objs = dic['DEC']
                 
                 ind_obj = np.where( (np.abs(RA_objs - RA) < search_radius) 
                                   & (np.abs(DEC_objs - DEC) < search_radius) )[0]

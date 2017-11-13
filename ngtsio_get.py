@@ -238,13 +238,13 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
         #        if ('FLUX3_ERR' in dic.keys()) and ('FLUX3_ERR' not in keys_0): del dic['FLUX3_ERR']
         #        if ('SYSREM_FLUX3' in dic.keys()) and ('SYSREM_FLUX3' not in keys_0): del dic['SYSREM_FLUX3']
         
-        #::: reconvert RA and DEC into radian if CYCLE1706
-        if ngts_version == 'CYCLE1706':
+        #::: convert RA and DEC from radian into degree if <CYCLE1706 and not in pipeline
+        if ('BLSPipe_megafile' not in fnames) and (ngts_version in ('TEST10','TEST16','TEST16A','TEST18')):
             if 'RA' in keys:
-                dic['RA'] = dic['RA']/180.*np.pi
+                dic['RA'] = dic['RA']*180./np.pi
             if 'DEC' in keys:
-                dic['DEC'] = dic['DEC']/180.*np.pi
-        
+                dic['DEC'] = dic['DEC']*180./np.pi
+#        
         #::: simplify output if only for 1 object
         if simplify: 
             dic = simplify_dic(dic)
@@ -1749,14 +1749,20 @@ if __name__ == '__main__':
     pass
     
 #    import matplotlib.pyplot as plt
-#    from pprint import pprint
+    from pprint import pprint
 
 #    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
-#    dic = get('NULL', 'NULL', ['SYSREM_FLUX3', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, fnames={'BLSPipe_megafile':fname})
+#    dic = get('NULL', 'NULL', ['SYSREM_FLUX3', 'RA', 'DEC', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, fnames={'BLSPipe_megafile':fname})
 #    pprint(dic)
    
-#    dic = get( 'NG0304-1115', 'CYCLE1706', ['HJD', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
-#    pprint(dic)
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
+    pprint(dic)
+    
+    dic = get( 'NG0304-1115', 'TEST18', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
+    pprint(dic)
+    
+    dic = get( 'NG0304-1115', 'TEST16A', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
+    pprint(dic)
 #    plt.figure()
 #    plt.plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
