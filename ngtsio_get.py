@@ -359,7 +359,6 @@ def standard_fnames(fieldname, ngts_version, roots, silent):
         try:
             f_decorr = os.path.join( roots['decorr'], '*'+fieldname+'*DECORR_FLUX3*.fits' )
             fnames['decorr'] = glob.glob( f_decorr )[-1]
-            print fnames['decorr']
         except:
             fnames['decorr'] = None
 #            warnings.warn( str(fieldname)+': Fits files "decorr" does not exist.' )
@@ -1559,7 +1558,6 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                 try:
                     hdukey = hdulist_sysrem[j].get_extname() 
                     if hdukey + '3' in keys: #little hack because of inconsistent extname convention
-                        print hdukey
                         key = hdukey + '3' #little hack because of inconsistent extname convention
 
                         #::: read out individual objects (more memory efficient)
@@ -1572,7 +1570,6 @@ def fitsio_get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time=slice(No
                                     ind_timeX = [x - ind_time[0] for x in ind_time]
                                     buf = buf[:,ind_timeX]
                                 dic[key][i,:] = buf
-                                print buf
                             del buf
 
                         #::: read out all objects at once
@@ -1749,20 +1746,14 @@ if __name__ == '__main__':
     pass
     
 #    import matplotlib.pyplot as plt
-    from pprint import pprint
+#    from pprint import pprint
 
 #    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
 #    dic = get('NULL', 'NULL', ['SYSREM_FLUX3', 'RA', 'DEC', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, fnames={'BLSPipe_megafile':fname})
 #    pprint(dic)
    
-    dic = get( 'NG0304-1115', 'CYCLE1706', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
-    pprint(dic)
-    
-    dic = get( 'NG0304-1115', 'TEST18', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
-    pprint(dic)
-    
-    dic = get( 'NG0304-1115', 'TEST16A', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
-    pprint(dic)
+#    dic = get( 'NG0304-1115', 'CYCLE1706', ['HJD', 'RA', 'DEC', 'FLUX3', 'SYSREM_FLUX3', 'DECORR_FLUX3', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, set_nan=True)#, fitsreader='fitsio', time_index=range(1000))
+#    pprint(dic)
 #    plt.figure()
 #    plt.plot(dic['HJD'],dic['FLUX3'],'k.',rasterized=True)
 #    plt.plot(dic['HJD'],dic['SYSREM_FLUX3'],'r.',rasterized=True)
