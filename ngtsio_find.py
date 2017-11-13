@@ -115,7 +115,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
         obj_id = ['None']*len(fieldnames)
         for i in ind_field:
             
-            dic = ngtsio_get.get(fieldnames[i][0:11], ['RA','DEC'], ngts_version=ngts_versions[i], silent=True) 
+            dic = ngtsio_get.get(fieldnames[i][0:11], ngts_versions[i], ['RA','DEC'], silent=True) 
             
             if dic is not None:  
                 #RA and DEC come out in degree
