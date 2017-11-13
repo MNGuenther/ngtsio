@@ -165,5 +165,5 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
 if __name__ == '__main__':
     pass
     find(94.4447609, -35.70636526, ngts_version='all', unit='deg', frame='icrs', 
-             give_obj_id=True, search_radius=0.014, field_radius=2.,
+             give_obj_id=True, search_radius=0.05, field_radius=2.,
              outfname=None)
