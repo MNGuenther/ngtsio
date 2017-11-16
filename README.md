@@ -12,7 +12,7 @@ This readme contains:
 ---
 ## Docs
 
-    ngtsio.get(fieldname, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, ngts_version='TEST18', set_nan=False):
+    ngtsio.get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, set_nan=False):
 
 Return a dictionary with all requested data for an NGTS field.
 
@@ -41,7 +41,7 @@ On other devices, copy the github code from here and add it to your pythonpath.
 
 i. on Warwick's or Cambridge's NGTS cluster
 
-    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
+    dic = ngtsio.get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046' )
     plt.figure()
     plt.plot( dic['HJD'], dic['SYSREM_FLUX3'], 'k.' )
     plt.title( dic['OBJ_ID'] )
@@ -49,7 +49,7 @@ i. on Warwick's or Cambridge's NGTS cluster
 ii. on your own system, simply give the root directory path via
 
     root = 'User/johnwayne/ngts-data/'
-    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', root=root )
+    dic = ngtsio.get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', root=root )
     
 or
     
@@ -58,7 +58,7 @@ or
     roots['sysrem'] = ''
     roots['bls'] = 'User/johnwayne/bar/'
     roots['canvas'] = 'User/johnwayne/spam/'
-    dic = ngtsio.get( 'NG0304-1115', ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', roots=roots )
+    dic = ngtsio.get( 'NG0304-1115', 'CYCLE1706',  ['OBJ_ID','HJD','SYSREM_FLUX3'], obj_id='00046', roots=roots )
     
 Note: the directory structure needs to be such that root contains at least one directory like 'TEST16A', which then again contains the nightly fits files, or a directory like 'bls' or 'canvas'. If your directories are not set up like this, you have the option to give the exact filenames via the fnames command (but therefore cannot easily toggle between versions & fields).
     
@@ -67,39 +67,44 @@ Note: the directory structure needs to be such that root contains at least one d
 #### b) Get and plot the mean locations of the first 100 listed objects on the CCD (on Warwick's NGTS cluster)
 (note that 'CCD_X' denotes the mean location, while 'CCDX' is the location per exposure) 
 
-    dic = ngtsio.get( 'NG0304-1115', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
+    dic = ngtsio.get( 'NG0304-1115', 'CYCLE1706', ['CCD_X','CCD_Y'], obj_row=range(1,101) )
     plt.figure()
     plt.plot( dic['CCD_X'], dic['CCD_Y'], 'k.' )
 
 #### c) Get the BLS results of some candidates (on Warwick's NGTS cluster)
 (note that obj_id 11 is not a BLS candidate, and that obj_id 1337 does not exist at all) 
 
-    dic = ngtsio.get( 'NG0304-1115', ['DEPTH','PERIOD','WIDTH'], obj_id=[11,46,49,54,1337] )
+    dic = ngtsio.get( 'NG0304-1115', 'CYCLE1706', ['DEPTH','PERIOD','WIDTH'], obj_id=[11,46,49,54,1337] )
     print dic
 
 #### d) Get and print a bunch of keys with various non-standard settings (on Warwick's NGTS cluster)
 
-    dic = get( 'NG0304-1115', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','SYSREM_FLUX3','RA','DEC','HJD','FLUX','PERIOD','WIDTH'], obj_row=range(0,10), time_date='20151104', indexing='python', fitsreader='pyfits', simplify=False )
     for key in dic:
         print '------------'
         print key, dic[key].shape
         print dic[key]
         print '------------'
 
-#### e) Compare two objects between TEST10 and TEST16 (on Warwick's NGTS cluster)
+#### e) Compare two objects between CYCLE1706 and TEST18 (on Warwick's NGTS cluster)
 
-    dic16 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112) #TEST16 is standard
-    dic10 = ngtsio.get('NG0522-2518', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112, ngts_version='TEST10')
+    dic1706 = ngtsio.get('NG0522-2518', 'CYCLE1706', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112)
+    dic18 = ngtsio.get('NG0522-2518', 'TEST18', ['OBJ_ID','RA','DEC','FLUX_MEAN','SYSREM_FLUX3'], obj_id=112)
 
 
 ---
 ### 3. Parameters descriptions
 
+####Required parameters:
+
 #####fieldname (string):
 name of the NGTS-field, e.g. 
 
     'NG0304-1115'
-    
+
+#####ngtsversion (string):
+From which directory shall the files be read? (Standard is usually the latest release. Irrelevant if filenames are given manually via fnames=fnames.)
+
 #####keys (string / array of strings):
 which parameters shall be read out from the fits files, e.g. 
 
@@ -107,6 +112,8 @@ which parameters shall be read out from the fits files, e.g.
     'HJD', 'FLUX', 'SYSREM_FLUX3', ...
     'DEPTH', 'PERIOD', 'WIDTH', ...
 See below for other valid requests.
+
+####Optional parameters:
 
 #####obj_id, obj_row (int / string / textfile / array of int / array of string)
 identifier of the objects to be read out. If empty, all objects will be retrieved. Only either obj_id or obj_row can be chosen as input, not both. obj_id reads out objects by their object IDs. obj_row reads the requested rows from the fits file. Examples: 
@@ -160,9 +167,6 @@ Leave blank if you want to run it on Warwick's NGTS cluster. This allows to manu
 #####silent (boolean)
 Whether a short report should be printed or not.
 
-#####ngtsversion (string)
-From which directory shall the files be read? (Standard is usually the latest release. Irrelevant if filenames are given manually via fnames=fnames.)
-
 #####set_nan (boolean)
 Whether all flagged values in CCDX/Y, CENDTX/Y and FLUX should be replaced with NAN or not (if not, they might be zeros or any reasonable/unreasonable real numbers).
 
@@ -183,8 +187,12 @@ Whether all flagged values in CCDX/Y, CENDTX/Y and FLUX should be replaced with 
 ##### From image data (per object and per image):
 
     HJD
-    FLUX
-    FLUX_ERR
+    FLUX3
+    FLUX3_ERR
+    FLUX4
+    FLUX4_ERR
+    FLUX5
+    FLUX5_ERR
     FLAGS
     CCDX
     CCDY
@@ -213,12 +221,12 @@ Whether all flagged values in CCDX/Y, CENDTX/Y and FLUX should be replaced with 
     ['OBJ_ID', 'RANK', 'FLAGS', 'PERIOD', 'WIDTH', 'DEPTH', 'EPOCH', 'DELTA_CHISQ', 'CHISQ', 'NPTS_TRANSIT', 'NUM_TRANSITS', 'NBOUND_IN_TRANS', 'AMP_ELLIPSE', 'SN_ELLIPSE', 'GAP_RATIO', 'SN_ANTI', 'SN_RED', 'SDE', 'MCMC_PERIOD', 'MCMC_EPOCH', 'MCMC_WIDTH', 'MCMC_DEPTH', 'MCMC_IMPACT', 'MCMC_RSTAR', 'MCMC_MSTAR', 'MCMC_RPLANET', 'MCMC_PRP', 'MCMC_PRS', 'MCMC_PRB', 'MCMC_CHISQ_CONS', 'MCMC_CHISQ_UNC', 'MCMC_DCHISQ_MR', 'MCMC_PERIOD_ERR', 'MCMC_EPOCH_ERR', 'MCMC_WIDTH_ERR', 'MCMC_DEPTH_ERR', 'MCMC_RPLANET_ERR', 'MCMC_RSTAR_ERR', 'MCMC_MSTAR_ERR', 'MCMC_CHSMIN', 'CLUMP_INDX', 'CAT_IDX', 'PG_IDX', 'LC_IDX']
 
 
-####d) CANVAS Text File (from >= TEST16A)
+####d) CANVAS Text File (if existant)
 
     ['CANVAS_PERIOD','CANVAS_EPOCH','CANVAS_WIDTH','CANVAS_DEPTH','CANVAS_Rp','CANVAS_Rs',...]
 
 
-####e) DILUTION Fits File (from >= TEST16A)
+####e) DILUTION Fits File (if existant)
 
     'DILUTION'
 
@@ -227,22 +235,22 @@ Whether all flagged values in CCDX/Y, CENDTX/Y and FLUX should be replaced with 
 ### 5. Execution time comparison, pyfits vs cfitsio:
 
 #####all objects, all times
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader='fitsio' )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader=‘pyfits’ )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader='fitsio' )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], fitsreader=‘pyfits’ )
     
     fitsio average time per run (out of 10 runs): 2.36079950333
     pyfits average time per run (out of 10 runs): 3.70509300232
 
 #####1 object, all times
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='fitsio’ )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='pyfits' )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='fitsio’ )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=1, fitsreader='pyfits' )
     
     fitsio average time per run (out of 10 runs): 0.0335123062134
     pyfits average time per run (out of 10 runs): 0.368131780624
 
 #####100 object, all times 
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='fitsio’ )
-    dic = get( 'NG0304-1115', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='pyfits' )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='fitsio’ )
+    dic = get( 'NG0304-1115', 'CYCLE1706', ['OBJ_ID','RA','DEC','HJD','FLUX'], obj_row=range(1,3501,35), fitsreader='pyfits' )
     
     fitsio average time per run (out of 10 runs): 0.123349809647
     pyfits average time per run (out of 10 runs): 0.462261390686
