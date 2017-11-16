@@ -215,46 +215,52 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
         if not silent: print 'Object IDs (',len(obj_ids),'):', obj_ids
         
-        #::: time
-        ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader, silent)
-        
-        #::: get dictionary
-        dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
-        
-        #::: in pipeline only
-        if ('SYSREM_FLUX3' in keys) and (fnames is not None) and ('BLSPipe_megafile' in fnames):
-            dic['SYSREM_FLUX3'] = dic['FLUX']
-            if 'FLUX' not in keys_0:
-                del dic['FLUX']
+        #::: only proceed if at least one of the requested objects exists
+        if isinstance(ind_objs,slice) or len(ind_objs)>0:
             
-        #::: set flagged values and flux==0 values to nan
-        if set_nan:
-            dic = set_nan_dic(dic)
-        
-        #::: remove entries that were only needed for readout / computing things
-        if ('FLAGS' in dic.keys()) and ('FLAGS' not in keys_0): 
-            del dic['FLAGS']
-        #        if ('FLUX' in dic.keys()) and ('FLUX' not in keys_0): del dic['FLUX']
-        #        if ('FLUX3_ERR' in dic.keys()) and ('FLUX3_ERR' not in keys_0): del dic['FLUX3_ERR']
-        #        if ('SYSREM_FLUX3' in dic.keys()) and ('SYSREM_FLUX3' not in keys_0): del dic['SYSREM_FLUX3']
-        
-        #::: convert RA and DEC from radian into degree if <CYCLE1706 and not in pipeline
-        if ('BLSPipe_megafile' not in fnames) and (ngts_version in ('TEST10','TEST16','TEST16A','TEST18')):
-            if 'RA' in keys:
-                dic['RA'] = dic['RA']*180./np.pi
-            if 'DEC' in keys:
-                dic['DEC'] = dic['DEC']*180./np.pi
-#        
-        #::: simplify output if only for 1 object
-        if simplify: 
-            dic = simplify_dic(dic)
-        
-        #::: add fieldname and ngts_version
-        dic['FIELDNAME'] = fieldname
-        dic['NGTS_VERSION'] = ngts_version
-        
-        #::: check if all keys were retrieved
-        check_dic(dic, keys_0, silent)
+            #::: time
+            ind_time = get_time_inds(fnames, time_index, time_date, time_hjd, time_actionid, fitsreader, silent)
+            
+            #::: get dictionary
+            dic, keys = get_data(fnames, obj_ids, ind_objs, keys, bls_rank, ind_time, fitsreader)
+            
+            #::: in pipeline only
+            if ('SYSREM_FLUX3' in keys) and (fnames is not None) and ('BLSPipe_megafile' in fnames):
+                dic['SYSREM_FLUX3'] = dic['FLUX']
+                if 'FLUX' not in keys_0:
+                    del dic['FLUX']
+                
+            #::: set flagged values and flux==0 values to nan
+            if set_nan:
+                dic = set_nan_dic(dic)
+            
+            #::: remove entries that were only needed for readout / computing things
+            if ('FLAGS' in dic.keys()) and ('FLAGS' not in keys_0): 
+                del dic['FLAGS']
+            #        if ('FLUX' in dic.keys()) and ('FLUX' not in keys_0): del dic['FLUX']
+            #        if ('FLUX3_ERR' in dic.keys()) and ('FLUX3_ERR' not in keys_0): del dic['FLUX3_ERR']
+            #        if ('SYSREM_FLUX3' in dic.keys()) and ('SYSREM_FLUX3' not in keys_0): del dic['SYSREM_FLUX3']
+            
+            #::: convert RA and DEC from radian into degree if <CYCLE1706 and not in pipeline
+            if ('BLSPipe_megafile' not in fnames) and (ngts_version in ('TEST10','TEST16','TEST16A','TEST18')):
+                if 'RA' in keys:
+                    dic['RA'] = dic['RA']*180./np.pi
+                if 'DEC' in keys:
+                    dic['DEC'] = dic['DEC']*180./np.pi
+    #        
+            #::: simplify output if only for 1 object
+            if simplify: 
+                dic = simplify_dic(dic)
+            
+            #::: add fieldname and ngts_version
+            dic['FIELDNAME'] = fieldname
+            dic['NGTS_VERSION'] = ngts_version
+            
+            #::: check if all keys were retrieved
+            check_dic(dic, keys_0, silent)
+            
+        else:
+            dic = None
  
     else: 
         dic = None
@@ -1744,10 +1750,19 @@ def check_dic(dic, keys, silent):
 ###############################################################################
 if __name__ == '__main__':
     pass
-    
+
 #    import matplotlib.pyplot as plt
 #    from pprint import pprint
-#
+
+
+#    obj_id = '012109'
+#    fieldname = 'NG0304-1115'
+#    ngts_version = 'CYCLE1706'
+#    dic = get(fieldname, ngts_version, ['OBJ_ID', 'FLUX_MEAN', 'RA', 'DEC', 'NIGHT', 'AIRMASS', 'HJD', 'CCDX', 'CCDY', 'CENTDX', 'CENTDY', 'SYSREM_FLUX3', 'PERIOD', 'WIDTH', 'EPOCH', 'DEPTH', 'NUM_TRANSITS'], obj_id=obj_id, time_hjd=None, fnames=None)
+#    dic = get(fieldname, ngts_version, ['OBJ_ID'], time_index=0, fnames=None)
+           
+#    print get('NULL','NULL',['HJD','SYSREM_FLUX3'],obj_id=7619,fnames={'BLSPipe_megafile':'/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'})
+    
 #    fname = '/Users/mx/Big_Data/BIG_DATA_NGTS/2016/TEST18/NG0304-1115_809_2016_TEST18.fits'
 #    dic = get('NULL', 'NULL', ['SYSREM_FLUX3', 'RA', 'DEC', 'CCDX', 'CENTDX', 'DILUTION', 'PERIOD', 'CANVAS_PERIOD'], obj_row=100, fnames={'BLSPipe_megafile':fname})
 #    pprint(dic)
