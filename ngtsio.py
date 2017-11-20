@@ -42,7 +42,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
          give_obj_id=True, search_radius=0.0014, field_radius=2., outfname=None):
     '''find the obj_id of a given RA and Dec with ngtsio_find.py; see ngtsio_find.py for docstring'''
     
-    print '#RA\tDEC\tfieldname\tngts_version\tobj_id'
+    print('#RA\tDEC\tfieldname\tngts_version\tobj_id')
     ngtsio_find.find(RA, DEC, ngts_version=ngts_version, unit=unit, frame=frame,  
                      give_obj_id=give_obj_id, search_radius=search_radius, 
                      field_radius=field_radius, outfname=outfname)
@@ -53,7 +53,7 @@ def find_list(fname, usecols=(0,1), ngts_version='all', unit='hmsdms', frame='ic
               give_obj_id=True, search_radius=0.014, field_radius=2., outfname=None):
     '''find the obj_id of multiple given RAs and Decs with ngtsio_find.py; see ngtsio_find.py for docstring'''
     
-    print '#RA\tDEC\tfieldname\tngts_version\tobj_id'
+    print('#RA\tDEC\tfieldname\tngts_version\tobj_id')
     RAs, DECs = np.genfromtxt(fname, usecols=usecols, delimiter='\t', dtype=None, unpack=True)
     for i in range(len(RAs)):
         ngtsio_find.find(RAs[i], DECs[i], ngts_version=ngts_version, unit=unit, frame=frame, 
