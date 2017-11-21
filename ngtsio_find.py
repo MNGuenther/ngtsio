@@ -139,7 +139,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
     def printer(outfile):
         if len(ind_field) == 0:
             line = RA_input +'\t'+ DEC_input +'\t'+ 'no match'
-            print line
+            print(line)
             if outfile is not None: outfile.write(line+'\n')
         else:
     #        print RA, DEC, 'in fields:'
@@ -150,7 +150,7 @@ def find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs',
                 else:
                     obj_id_str = obj_id[i]
                 line = RA_input +'\t'+ DEC_input +'\t'+ fieldnames[i][0:11] +'\t'+ ngts_versions[i] +'\t'+ obj_id_str
-                print line
+                print(line)
                 if outfile is not None: outfile.write(line+'\n')
                 
     

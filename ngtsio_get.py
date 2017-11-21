@@ -185,8 +185,8 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
                        Please use FLUX3, FLUX4, FLUX5, SYSREM_FLUX3 or DECORR_FLUX3 for final products.')
 
     if not silent: 
-        print 'Field name:', fieldname
-        print 'NGTS version:', ngts_version
+        print('Field name:', fieldname)
+        print('NGTS version:', ngts_version)
 
     if (roots is None) and (fnames is None):
         roots = standard_roots(fieldname, ngts_version, root, silent)
@@ -213,7 +213,7 @@ def get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=Non
         
         #::: objects
         ind_objs, obj_ids = get_obj_inds(fnames, obj_id, obj_row, indexing, fitsreader, obj_sortby = 'obj_ids')
-        if not silent: print 'Object IDs (',len(obj_ids),'):', obj_ids
+        if not silent: print('Object IDs (',len(obj_ids),'):', obj_ids)
         
         #::: only proceed if at least one of the requested objects exists
         if isinstance(ind_objs,slice) or len(ind_objs)>0:
@@ -1727,19 +1727,19 @@ def set_nan_multi(dic):
 ###############################################################################
 def check_dic(dic, keys, silent):
 
-    if not silent: print '###############################################################################'
+    if not silent: print('###############################################################################')
 
     fail = False
 
     for key in keys:
         if key not in dic:
-            print 'Failure: key',key,'not read into dictionary.'
+            print('Failure: key',key,'not read into dictionary.')
             fail = True
 
     if fail == False:
-        if not silent: print 'Success: All keys successfully read into dictionary.'
+        if not silent: print('Success: All keys successfully read into dictionary.')
 
-    if not silent: print '###############################################################################'
+    if not silent: print('###############################################################################')
 
     return
 
