@@ -2,6 +2,7 @@
 Wrapper for astropy and cfitsio readers for NGTS data files.
 This readme contains:
 
+0. Quick overview
 1. Installation
 2. Examples 
 3. Parameter descriptions
@@ -11,10 +12,25 @@ This readme contains:
 
 ---
 ## Docs
+### 0. Quick overview: get - find - save
 
-    ngtsio.get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, set_nan=False):
+Return a python dictionary with all requested data for an NGTS field:
 
-Return a dictionary with all requested data for an NGTS field.
+    ngtsio.get(fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, set_nan=False)
+
+
+Find the OBJ_ID for given RA and Dec:
+
+    ngtsio.find(RA, DEC, ngts_version='all', unit='hmsdms', frame='icrs', give_obj_id=True, search_radius=0.0014, field_radius=2., outfname=None)
+
+    ngtsio.find_list(fname, usecols=(0,1), ngts_version='all', unit='hmsdms', frame='icrs', give_obj_id=True, search_radius=0.014, field_radius=2., outfname=None)
+
+
+Save all requested data to a pickle file (e.g. as starting point for global fitting):
+
+    ngtsio.save(outfilename, fieldname, ngts_version, keys, obj_id=None, obj_row=None, time_index=None, time_date=None, time_hjd=None, time_actionid=None, bls_rank=1, indexing='fits', fitsreader='fitsio', simplify=True, fnames=None, root=None, roots=None, silent=False, set_nan=False)
+
+
 
 ---
 ### 1. Installation
