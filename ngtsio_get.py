@@ -291,10 +291,10 @@ def standard_roots(fieldname, ngts_version, root, silent):
             #::: on Cambridge servers
             elif 'ra.phy.cam.ac.uk' in socket.gethostname():
                 roots = {}
-                roots['nights'] = scalify(glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*'))
-                roots['sysrem'] = scalify(glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*'))
-                roots['bls'] = scalify(glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*'))
-                roots['decorr'] = scalify(glob.glob('/appch/data/mg719/ngts_pipeline_output/prodstore/*/DecorrPipe*'+fieldname+'*'+ngts_version+'*'))
+                roots['nights'] = scalify(glob.glob('/appcg/data2/NGTS/ngts_pipeline_output/prodstore/*/MergePipe*'+fieldname+'*'+ngts_version+'*'))
+                roots['sysrem'] = scalify(glob.glob('/appcg/data2/NGTS/ngts_pipeline_output/prodstore/*/SysremPipe*'+fieldname+'*'+ngts_version+'*'))
+                roots['bls'] = scalify(glob.glob('/appcg/data2/NGTS/ngts_pipeline_output/prodstore/*/BLSPipe*'+fieldname+'*'+ngts_version+'*'))
+                roots['decorr'] = scalify(glob.glob('/appcg/data2/NGTS/ngts_pipeline_output/prodstore/*/DecorrPipe*'+fieldname+'*'+ngts_version+'*'))
                 roots['dilution'] = None
                 roots['canvas'] = None
     
